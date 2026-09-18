@@ -1145,6 +1145,26 @@
     document.getElementById('statusBannerInner').textContent = '';
   }
 
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function collectMediaAsBase64() {
+    const payload = [];
+    for (const type of ['photo', 'video', 'audio']) {
+      for (const file of mediaStore[type]) {
+        const dataUrl = await fileToDataUrl(file);
+        payload.push({ type, name: file.name, mimeType: file.type, dataUrl });
+      }
+    }
+    return payload;
+  }
+
   async function submitReport() {
     clearBanner();
 
@@ -1179,7 +1199,7 @@
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
-    showBanner('success', 'Submitting report — please wait, this can take a moment if photos or video are attached. Don\'t close this page.');
+    showBanner('success', 'Preparing and submitting report — this can take a moment if photos or video are attached. Don\'t close this page.');
 
     try {
       const crewNames = Array.from(document.querySelectorAll('#crewList input'))
@@ -1210,9 +1230,8 @@
         formData.append('signatureDataUrl', sigCanvas.toDataURL('image/png'));
       }
 
-      mediaStore.photo.forEach(f => formData.append('photo', f, f.name));
-      mediaStore.video.forEach(f => formData.append('video', f, f.name));
-      mediaStore.audio.forEach(f => formData.append('audio', f, f.name));
+      const mediaPayload = await collectMediaAsBase64();
+      formData.append('mediaFilesJson', JSON.stringify(mediaPayload));
 
       const response = await fetch(SUBMIT_ENDPOINT, { method: 'POST', body: formData });
       const result = await response.json();

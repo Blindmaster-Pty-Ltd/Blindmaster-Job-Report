@@ -826,7 +826,7 @@
 
 <div class="submit-row">
   <button type="button" class="btn-secondary" onclick="printReport()">Print / Save as PDF</button>
-  <button type="button" class="btn-primary" onclick="submitReport()">Submit Report</button>
+  <button type="button" id="submitBtn" class="btn-primary" onclick="submitReport()">Submit Report</button>
 </div>
 
 <div class="footer-note">
@@ -1018,6 +1018,9 @@
     }
   }
 
+  // Web App URL that receives submitted reports and saves them to Drive + email
+  const SUBMIT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzM9QOP-apaGedZTu2iH9P3ePobnHeyCYrJpIAkAxmMmQovg5zt7iib0jjnzDglGlcSUg/exec';
+
   const mediaStore = { photo: [], video: [], audio: [] };
 
   function handleFiles(type, fileList) {
@@ -1142,7 +1145,7 @@
     document.getElementById('statusBannerInner').textContent = '';
   }
 
-  function submitReport() {
+  async function submitReport() {
     clearBanner();
 
     const required = [
@@ -1173,7 +1176,62 @@
       return;
     }
 
-    showBanner('success', 'Report ready for submission.\n\nIn a connected deployment this would upload the form data and attached photos/video/audio to Blindmaster\'s job system. For now, use "Print / Save as PDF" to generate a file for the office.');
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+    showBanner('success', 'Submitting report — please wait, this can take a moment if photos or video are attached. Don\'t close this page.');
+
+    try {
+      const crewNames = Array.from(document.querySelectorAll('#crewList input'))
+        .map(i => i.value.trim())
+        .filter(Boolean);
+
+      const status = document.getElementById('statusComplete').classList.contains('active') ? 'Completed' : 'Not Completed';
+
+      const formData = new FormData();
+      formData.append('client', document.getElementById('clientName').value.trim());
+      formData.append('ref', document.getElementById('jobRef').value.trim());
+      formData.append('address', document.getElementById('siteAddress').value.trim());
+      formData.append('date', document.getElementById('jobDate').value);
+      formData.append('crew', crewNames.join(', '));
+      formData.append('crewCount', document.getElementById('crewCount').textContent);
+      formData.append('startTime', document.getElementById('startTime').value);
+      formData.append('finishTime', document.getElementById('finishTime').value);
+      formData.append('totalTime', document.getElementById('totalTime').value);
+      formData.append('tasksDone', document.getElementById('tasksDone').value.trim());
+      formData.append('status', status);
+      formData.append('remainingWork', document.getElementById('remainingWork').value.trim());
+      formData.append('timeRequired', document.getElementById('timeRequired').value.trim());
+      formData.append('signoffName', document.getElementById('signoffName').value.trim());
+      formData.append('signoffDate', document.getElementById('signoffDate').value);
+
+      if (!isSignaturePadEmpty()) {
+        const sigCanvas = document.getElementById('sigPad');
+        formData.append('signatureDataUrl', sigCanvas.toDataURL('image/png'));
+      }
+
+      mediaStore.photo.forEach(f => formData.append('photo', f, f.name));
+      mediaStore.video.forEach(f => formData.append('video', f, f.name));
+      mediaStore.audio.forEach(f => formData.append('audio', f, f.name));
+
+      const response = await fetch(SUBMIT_ENDPOINT, { method: 'POST', body: formData });
+      const result = await response.json();
+
+      if (result.success) {
+        const folderNote = result.folderUrl ? '\n\nSaved to: ' + result.folderName : '';
+        const warningNote = result.warning ? '\n\n' + result.warning : '';
+        showBanner('success', 'Report submitted successfully.' + folderNote + warningNote);
+        submitBtn.textContent = 'Submitted ✓';
+      } else {
+        showBanner('error', 'Submission failed: ' + (result.error || 'Unknown error') + '\n\nPlease try again, or use "Print / Save as PDF" and send this report to the office manually.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Report';
+      }
+    } catch (err) {
+      showBanner('error', 'Could not reach the submission server. Check your internet connection and try again, or use "Print / Save as PDF" and send this report to the office manually.\n\n(' + err.message + ')');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Report';
+    }
   }
 
   function printReport() {

@@ -1216,10 +1216,13 @@
       await document.fonts.ready;
     }
 
+    const originalScrollY = window.scrollY;
+    window.scrollTo(0, 0);
+
     document.body.classList.add('capturing-for-pdf');
 
-    // Give the browser a moment to apply the class before capturing
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Give the browser a moment to apply the class and settle scroll before capturing
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     let canvas;
     try {
@@ -1227,11 +1230,14 @@
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
+        scrollX: 0,
+        scrollY: -window.scrollY,
         windowWidth: document.documentElement.scrollWidth,
         windowHeight: document.documentElement.scrollHeight
       });
     } finally {
       document.body.classList.remove('capturing-for-pdf');
+      window.scrollTo(0, originalScrollY);
     }
 
     const { jsPDF } = window.jspdf;

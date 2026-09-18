@@ -826,7 +826,10 @@
     <div class="grid">
       <div class="field">
         <label>Reporting Installer Name <span class="req">*</span></label>
-        <input type="text" id="signoffName" placeholder="Full name">
+        <select id="signoffName" onchange="handleSignoffNameChange()">
+          <option value="" disabled selected>Select installer</option>
+        </select>
+        <input type="text" id="signoffNameOther" placeholder="Type installer name" style="display:none; margin-top:8px;">
       </div>
       <div class="field">
         <label>Date Submitted</label>
@@ -842,7 +845,7 @@
       <div style="display:flex; justify-content:flex-end; margin-top:6px;">
         <button type="button" class="clear-sig-btn" onclick="clearSignature()">Clear Signature</button>
       </div>
-      <div class="hint">Or, if signing isn't possible on this device, type your full name in "Reporting Installer Name" above as your digital confirmation.</div>
+      <div class="hint">Or, if signing isn't possible on this device, select your name in "Reporting Installer Name" above as your digital confirmation.</div>
     </div>
   </div>
 
@@ -871,17 +874,19 @@
     row.className = 'crew-row';
     row.id = 'crewRow-' + crewRowCount;
     row.innerHTML = `
-      <input type="text" placeholder="Installer full name" value="${name || ''}" oninput="updateCrewCount()">
+      <input type="text" placeholder="Installer full name" value="${name || ''}" oninput="updateCrewCount(); updateSignoffNameOptions();">
       <button type="button" class="icon-btn remove" onclick="removeCrewRow(${crewRowCount})" title="Remove">&times;</button>
     `;
     list.appendChild(row);
     updateCrewCount();
+    updateSignoffNameOptions();
   }
 
   function removeCrewRow(id) {
     const row = document.getElementById('crewRow-' + id);
     if (row) row.remove();
     updateCrewCount();
+    updateSignoffNameOptions();
   }
 
   function updateCrewCount() {
@@ -889,6 +894,54 @@
     let filled = 0;
     inputs.forEach(i => { if (i.value.trim() !== '') filled++; });
     document.getElementById('crewCount').textContent = filled;
+  }
+
+  function updateSignoffNameOptions() {
+    const select = document.getElementById('signoffName');
+    const previousValue = select.value;
+
+    const crewNames = Array.from(document.querySelectorAll('#crewList input'))
+      .map(i => i.value.trim())
+      .filter(Boolean);
+
+    select.innerHTML = '<option value="" disabled>Select installer</option>';
+    crewNames.forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      select.appendChild(option);
+    });
+    const otherOption = document.createElement('option');
+    otherOption.value = '__other__';
+    otherOption.textContent = 'Other (type name)';
+    select.appendChild(otherOption);
+
+    // Keep the previous selection if it's still valid (name wasn't removed/edited away)
+    if (previousValue && (crewNames.includes(previousValue) || previousValue === '__other__')) {
+      select.value = previousValue;
+    } else {
+      select.selectedIndex = 0;
+      document.getElementById('signoffNameOther').style.display = 'none';
+    }
+  }
+
+  function handleSignoffNameChange() {
+    const select = document.getElementById('signoffName');
+    const otherInput = document.getElementById('signoffNameOther');
+    if (select.value === '__other__') {
+      otherInput.style.display = 'block';
+      otherInput.focus();
+    } else {
+      otherInput.style.display = 'none';
+    }
+  }
+
+  function getSignoffName() {
+    const select = document.getElementById('signoffName');
+    if (select.value === '__other__') {
+      return document.getElementById('signoffNameOther').value.trim();
+    }
+    return select.value.trim();
   }
 
   // seed with two blank rows
@@ -1299,8 +1352,7 @@
       ['jobDate', 'Date of Installation'],
       ['startTime', 'Start Time'],
       ['finishTime', 'Finish Time'],
-      ['tasksDone', 'Description of Tasks Undertaken'],
-      ['signoffName', 'Reporting Installer Name']
+      ['tasksDone', 'Description of Tasks Undertaken']
     ];
     let missing = [];
     required.forEach(([id, label]) => {
@@ -1308,11 +1360,13 @@
       if (!el.value || el.value.trim() === '') missing.push(label);
     });
 
+    if (!getSignoffName()) missing.push('Reporting Installer Name');
+
     const statusSet = document.getElementById('statusComplete').classList.contains('active') ||
                        document.getElementById('statusIncomplete').classList.contains('active');
     if (!statusSet) missing.push('Completion Status');
 
-    if (isSignaturePadEmpty() && !document.getElementById('signoffName').value.trim()) {
+    if (isSignaturePadEmpty() && !getSignoffName()) {
       missing.push('Signature (draw a signature, or type your name above as confirmation)');
     }
 
@@ -1348,13 +1402,8 @@
       formData.append('remainingWork', document.getElementById('remainingWork').value.trim());
       formData.append('timeRequired', document.getElementById('timeRequired').value.trim());
       formData.append('menRequired', document.getElementById('menRequired').value.trim());
-      formData.append('signoffName', document.getElementById('signoffName').value.trim());
+      formData.append('signoffName', getSignoffName());
       formData.append('signoffDate', document.getElementById('signoffDate').value);
-
-      if (!isSignaturePadEmpty()) {
-        const sigCanvas = document.getElementById('sigPad');
-        formData.append('signatureDataUrl', sigCanvas.toDataURL('image/png'));
-      }
 
       const mediaPayload = await collectMediaAsBase64();
       formData.append('mediaFilesJson', JSON.stringify(mediaPayload));

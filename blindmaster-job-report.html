@@ -593,6 +593,22 @@
     .submit-row, .add-btn, .icon-btn, .file-btn, .file-input-wrap { display: none !important; }
     .container { margin-top: 0; }
   }
+
+  /* Applied briefly while generating the submitted PDF snapshot, so it
+     matches what "Print / Save as PDF" produces — hides buttons and
+     interactive-only controls that shouldn't appear in the saved report. */
+  body.capturing-for-pdf { background: var(--white); padding: 0; }
+  body.capturing-for-pdf .header::after { display: none; }
+  body.capturing-for-pdf .card { box-shadow: none; border: 1px solid var(--grey-line); }
+  body.capturing-for-pdf .submit-row,
+  body.capturing-for-pdf .add-btn,
+  body.capturing-for-pdf .icon-btn,
+  body.capturing-for-pdf .file-btn,
+  body.capturing-for-pdf .file-input-wrap,
+  body.capturing-for-pdf .dictate-btn,
+  body.capturing-for-pdf #statusBanner,
+  body.capturing-for-pdf .clear-sig-btn { display: none !important; }
+  body.capturing-for-pdf .container { margin-top: 0; }
 </style>
 </head>
 <body>
@@ -843,6 +859,8 @@
   Blindmaster Pty Ltd &nbsp;&middot;&nbsp; Installation Job Report &nbsp;&middot;&nbsp; Internal Use — Retain for Client File
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
   let crewRowCount = 0;
 
@@ -1191,6 +1209,70 @@
     });
   }
 
+  async function generateReportPdfDataUrl() {
+    // Wait for the Manrope font to finish loading so the snapshot matches
+    // what's actually shown on screen, not a fallback font.
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+
+    document.body.classList.add('capturing-for-pdf');
+
+    // Give the browser a moment to apply the class before capturing
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    let canvas;
+    try {
+      canvas = await html2canvas(document.body, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        windowWidth: document.documentElement.scrollWidth,
+        windowHeight: document.documentElement.scrollHeight
+      });
+    } finally {
+      document.body.classList.remove('capturing-for-pdf');
+    }
+
+    const { jsPDF } = window.jspdf;
+    const pageWidthMm = 210;   // A4
+    const pageHeightMm = 297;  // A4
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    const canvasWidthPx = canvas.width;
+    const canvasHeightPx = canvas.height;
+    const pxToMm = pageWidthMm / canvasWidthPx;
+    const pageHeightPx = pageHeightMm / pxToMm;
+
+    let renderedHeightPx = 0;
+    let isFirstPage = true;
+
+    while (renderedHeightPx < canvasHeightPx) {
+      const sliceHeightPx = Math.min(pageHeightPx, canvasHeightPx - renderedHeightPx);
+
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width = canvasWidthPx;
+      pageCanvas.height = sliceHeightPx;
+      const ctx = pageCanvas.getContext('2d');
+      ctx.drawImage(
+        canvas,
+        0, renderedHeightPx, canvasWidthPx, sliceHeightPx,
+        0, 0, canvasWidthPx, sliceHeightPx
+      );
+
+      const sliceDataUrl = pageCanvas.toDataURL('image/jpeg', 0.92);
+      const sliceHeightMm = sliceHeightPx * pxToMm;
+
+      if (!isFirstPage) pdf.addPage();
+      pdf.addImage(sliceDataUrl, 'JPEG', 0, 0, pageWidthMm, sliceHeightMm);
+
+      renderedHeightPx += sliceHeightPx;
+      isFirstPage = false;
+    }
+
+    return pdf.output('datauristring');
+  }
+
   async function collectMediaAsBase64() {
     const payload = [];
     for (const type of ['photo', 'video', 'audio']) {
@@ -1236,7 +1318,7 @@
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
-    showBanner('success', 'Preparing and submitting report — this can take a moment if photos or video are attached. Don\'t close this page.');
+    showBanner('success', 'Preparing your report as a PDF and submitting — this can take a few extra seconds, especially with photos or video attached. Don\'t close this page.');
 
     try {
       const crewNames = Array.from(document.querySelectorAll('#crewList input'))
@@ -1270,6 +1352,9 @@
 
       const mediaPayload = await collectMediaAsBase64();
       formData.append('mediaFilesJson', JSON.stringify(mediaPayload));
+
+      const renderedPdfDataUrl = await generateReportPdfDataUrl();
+      formData.append('renderedPdfDataUrl', renderedPdfDataUrl);
 
       const response = await fetch(SUBMIT_ENDPOINT, { method: 'POST', body: formData });
       const result = await response.json();

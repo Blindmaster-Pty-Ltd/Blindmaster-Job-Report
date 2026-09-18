@@ -736,9 +736,19 @@
         <div class="hint" id="dictateHint-remainingWork" style="display:none;">&#127908; Listening — speak now. Click "Stop" when finished.</div>
         <div class="hint" id="dictateUnsupported-remainingWork" style="display:none;">Voice input isn't supported in this browser. Try Chrome on desktop or Android.</div>
       </div>
-      <div class="field" style="max-width: 260px;">
-        <label>Anticipated Time Required</label>
-        <input type="text" id="timeRequired" placeholder="e.g. 1 day, 4 hours">
+      <div class="grid">
+        <div class="field">
+          <label>Anticipated Time Required</label>
+          <select id="timeRequired">
+            <option value="" disabled selected>Select hours</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Number of Men Required</label>
+          <select id="menRequired">
+            <option value="" disabled selected>Select number</option>
+          </select>
+        </div>
       </div>
     </div>
   </div>
@@ -1062,14 +1072,19 @@
     document.getElementById('signoffDate').value = today;
     populateTimeOptions('startTime');
     populateTimeOptions('finishTime');
+    populateHoursRequired();
+    populateMenRequired();
     applyPrefillFromUrl();
     initSignaturePad();
   });
 
   function populateTimeOptions(selectId) {
     const select = document.getElementById(selectId);
-    for (let h = 0; h < 24; h++) {
-      for (let m = 0; m < 60; m += 15) {
+    const startHour = 5;  // 5:00 AM
+    const endHour = 18;   // 6:00 PM (inclusive, no minutes past this)
+    for (let h = startHour; h <= endHour; h++) {
+      const maxMinute = (h === endHour) ? 0 : 45;
+      for (let m = 0; m <= maxMinute; m += 15) {
         const hh = String(h).padStart(2, '0');
         const mm = String(m).padStart(2, '0');
         const value = hh + ':' + mm;
@@ -1081,11 +1096,33 @@
     }
   }
 
+  function populateHoursRequired() {
+    const select = document.getElementById('timeRequired');
+    for (let h = 1; h <= 10; h++) {
+      const option = document.createElement('option');
+      option.value = String(h);
+      option.textContent = h + (h === 1 ? ' hour' : ' hours');
+      select.appendChild(option);
+    }
+  }
+
+  function populateMenRequired() {
+    const select = document.getElementById('menRequired');
+    for (let n = 1; n <= 4; n++) {
+      const option = document.createElement('option');
+      option.value = String(n);
+      option.textContent = n + (n === 1 ? ' man' : ' men');
+      select.appendChild(option);
+    }
+  }
+
   function handleStartTimeChange() {
     const startVal = document.getElementById('startTime').value;
     if (startVal) {
       const [h, m] = startVal.split(':').map(Number);
-      const totalMinutes = (h * 60 + m + 60) % (24 * 60); // +1 hour, wrapping past midnight
+      let totalMinutes = h * 60 + m + 60; // +1 hour
+      const maxMinutes = 18 * 60; // 6:00 PM — the latest available option
+      if (totalMinutes > maxMinutes) totalMinutes = maxMinutes;
       const newH = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
       const newM = String(totalMinutes % 60).padStart(2, '0');
       document.getElementById('finishTime').value = newH + ':' + newM;
@@ -1222,6 +1259,7 @@
       formData.append('status', status);
       formData.append('remainingWork', document.getElementById('remainingWork').value.trim());
       formData.append('timeRequired', document.getElementById('timeRequired').value.trim());
+      formData.append('menRequired', document.getElementById('menRequired').value.trim());
       formData.append('signoffName', document.getElementById('signoffName').value.trim());
       formData.append('signoffDate', document.getElementById('signoffDate').value);
 

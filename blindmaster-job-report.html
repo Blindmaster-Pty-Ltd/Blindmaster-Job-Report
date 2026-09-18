@@ -759,7 +759,7 @@
           <div class="m-sub">JPG, PNG, HEIC</div>
           <div class="file-input-wrap">
             <label class="file-btn" for="photoInput">Add Photos</label>
-            <input type="file" id="photoInput" accept="image/*" multiple capture="environment" onchange="handleFiles('photo', this.files)">
+            <input type="file" id="photoInput" accept="image/*" multiple onchange="handleFiles('photo', this.files)">
           </div>
           <div class="file-list" id="fileList-photo"></div>
         </div>
@@ -771,7 +771,7 @@
           <div class="m-sub">MP4, MOV</div>
           <div class="file-input-wrap">
             <label class="file-btn" for="videoInput">Add Video</label>
-            <input type="file" id="videoInput" accept="video/*" multiple capture="environment" onchange="handleFiles('video', this.files)">
+            <input type="file" id="videoInput" accept="video/*" multiple onchange="handleFiles('video', this.files)">
           </div>
           <div class="file-list" id="fileList-video"></div>
         </div>
@@ -783,7 +783,7 @@
           <div class="m-sub">MP3, M4A, WAV</div>
           <div class="file-input-wrap">
             <label class="file-btn" for="audioInput">Add Recording</label>
-            <input type="file" id="audioInput" accept="audio/*" multiple capture onchange="handleFiles('audio', this.files)">
+            <input type="file" id="audioInput" accept="audio/*" multiple onchange="handleFiles('audio', this.files)">
           </div>
           <div class="file-list" id="fileList-audio"></div>
         </div>

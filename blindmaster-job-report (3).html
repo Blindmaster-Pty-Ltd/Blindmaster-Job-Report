@@ -608,6 +608,26 @@
   body.capturing-for-pdf .dictate-btn,
   body.capturing-for-pdf #statusBanner,
   body.capturing-for-pdf .clear-sig-btn { display: none !important; }
+  body.capturing-for-pdf textarea { display: none !important; }
+
+  /* Stand-in for a textarea during PDF capture — html2canvas doesn't wrap
+     text inside real <textarea> elements correctly, so we swap in a plain
+     wrapped text block with matching styling just for the snapshot. */
+  .pdf-textarea-clone {
+    display: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--white);
+    border: 1.5px solid var(--grey-line);
+    border-radius: 6px;
+    padding: 10px 12px;
+    box-sizing: border-box;
+  }
+  body.capturing-for-pdf .pdf-textarea-clone { display: block; }
   body.capturing-for-pdf .container { margin-top: 0; }
 </style>
 </head>
@@ -1442,6 +1462,19 @@
 
     document.body.classList.add('capturing-for-pdf');
 
+    // Swap each textarea for a wrapped-text clone, since html2canvas doesn't
+    // reliably wrap text inside real <textarea> elements.
+    const textareaClones = [];
+    document.querySelectorAll('textarea').forEach(textarea => {
+      const clone = document.createElement('div');
+      clone.className = 'pdf-textarea-clone';
+      clone.textContent = textarea.value || '';
+      clone.style.width = textarea.offsetWidth + 'px';
+      clone.style.minHeight = textarea.offsetHeight + 'px';
+      textarea.insertAdjacentElement('afterend', clone);
+      textareaClones.push(clone);
+    });
+
     // Give the browser a moment to apply the class and settle scroll before capturing
     await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -1457,6 +1490,7 @@
       });
     } finally {
       document.body.classList.remove('capturing-for-pdf');
+      textareaClones.forEach(clone => clone.remove());
       window.scrollTo(0, originalScrollY);
     }
 

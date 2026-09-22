@@ -1658,6 +1658,31 @@
     return pdf.output('datauristring');
   }
 
+  function getGeolocation(timeoutMs) {
+    return new Promise(resolve => {
+      if (!navigator.geolocation) {
+        resolve(null);
+        return;
+      }
+      const timeoutId = setTimeout(() => resolve(null), timeoutMs);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          clearTimeout(timeoutId);
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
+        },
+        () => {
+          clearTimeout(timeoutId);
+          resolve(null); // denied, unavailable, or timed out — submission still proceeds without it
+        },
+        { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 0 }
+      );
+    });
+  }
+
   async function collectMediaAsBase64() {
     const payload = [];
     for (const type of ['photo', 'video', 'audio']) {
@@ -1723,7 +1748,7 @@
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
-    showBanner('success', 'Preparing your report as a PDF and submitting — this can take a few extra seconds, especially with photos or video attached. Don\'t close this page.');
+    showBanner('success', 'Preparing your report as a PDF and submitting — this can take a few extra seconds, especially with photos or video attached. If asked, allow location access to tag where this report was submitted. Don\'t close this page.');
 
     try {
       const crewNames = Array.from(document.querySelectorAll('#crewList input'))
@@ -1740,6 +1765,13 @@
       formData.append('projectManager', document.getElementById('projectManager').value);
       formData.append('calEventId', document.getElementById('calEventId').value);
       formData.append('calId', document.getElementById('calId').value);
+
+      const location = await getGeolocation(8000); // best-effort, 8 second timeout
+      if (location) {
+        formData.append('latitude', String(location.latitude));
+        formData.append('longitude', String(location.longitude));
+        formData.append('locationAccuracy', String(Math.round(location.accuracy)));
+      }
       formData.append('crew', crewNames.join(', '));
       formData.append('crewCount', document.getElementById('crewCount').textContent);
       formData.append('startTime', document.getElementById('startTime').value);

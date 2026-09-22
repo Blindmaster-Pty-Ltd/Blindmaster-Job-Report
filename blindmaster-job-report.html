@@ -1678,7 +1678,7 @@
           clearTimeout(timeoutId);
           resolve(null); // denied, unavailable, or timed out — submission still proceeds without it
         },
-        { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 0 }
+        { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 0 }
       );
     });
   }
@@ -1766,7 +1766,7 @@
       formData.append('calEventId', document.getElementById('calEventId').value);
       formData.append('calId', document.getElementById('calId').value);
 
-      const location = await getGeolocation(8000); // best-effort, 8 second timeout
+      const location = await getGeolocation(10000); // best-effort, 10 second timeout
       if (location) {
         formData.append('latitude', String(location.latitude));
         formData.append('longitude', String(location.longitude));

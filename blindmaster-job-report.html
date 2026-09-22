@@ -1845,18 +1845,38 @@
     const canvas = document.getElementById('sigPad');
     const placeholder = document.getElementById('sigPlaceholder');
 
-    // Match the canvas's internal resolution to its displayed size for crisp lines
-    const ratio = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * ratio;
-    canvas.height = rect.height * ratio;
-
     sigCtx = canvas.getContext('2d');
-    sigCtx.scale(ratio, ratio);
-    sigCtx.strokeStyle = '#0B1E3D';
-    sigCtx.lineWidth = 2.2;
-    sigCtx.lineCap = 'round';
-    sigCtx.lineJoin = 'round';
+
+    function sizeCanvasToDisplaySize() {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return; // not laid out yet — wait for the next resize signal
+
+      const newWidth = Math.round(rect.width * ratio);
+      const newHeight = Math.round(rect.height * ratio);
+      if (canvas.width === newWidth && canvas.height === newHeight) return; // already correctly sized
+
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      sigCtx.scale(ratio, ratio);
+      sigCtx.strokeStyle = '#0B1E3D';
+      sigCtx.lineWidth = 2.2;
+      sigCtx.lineCap = 'round';
+      sigCtx.lineJoin = 'round';
+    }
+
+    // Size it now (in case layout is already settled), and again automatically
+    // whenever the canvas's real rendered size becomes known/changes — this
+    // covers slow font loads, prefill-driven layout shifts, and orientation
+    // changes, rather than relying on a single well-timed measurement.
+    sizeCanvasToDisplaySize();
+    if (window.ResizeObserver) {
+      new ResizeObserver(sizeCanvasToDisplaySize).observe(canvas);
+    } else {
+      // Fallback for older browsers without ResizeObserver support
+      window.addEventListener('resize', sizeCanvasToDisplaySize);
+      setTimeout(sizeCanvasToDisplaySize, 300);
+    }
 
     function getPos(evt) {
       const r = canvas.getBoundingClientRect();

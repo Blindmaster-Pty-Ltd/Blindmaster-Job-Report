@@ -1344,7 +1344,7 @@
   }
 
   // default date fields to today, then apply any calendar prefill from the URL
-  window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded', async () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('jobDate').value = today;
     document.getElementById('signoffDate').value = today;
@@ -1352,7 +1352,7 @@
     populateTimeOptions('finishTime');
     populateHoursRequired();
     populateMenRequired();
-    applyPrefillFromUrl();
+    await applyPrefillFromUrl();
     initSignaturePad();
   });
 
@@ -1410,7 +1410,7 @@
     updateTotalTime();
   }
 
-  function applyPrefillFromUrl() {
+  async function applyPrefillFromUrl() {
     const params = new URLSearchParams(window.location.search);
     let didPrefill = false;
 
@@ -1456,6 +1456,97 @@
 
     if (didPrefill) {
       document.getElementById('prefillBanner').style.display = 'block';
+    }
+
+    // If this job has already been submitted before, restore that
+    // submission's answers so it can be reviewed/updated rather than
+    // starting blank.
+    const refForLookup = document.getElementById('jobRef').value.trim();
+    if (refForLookup) {
+      const restored = await fetchAndApplyPreviousSubmission(refForLookup);
+      if (restored) {
+        const banner = document.getElementById('prefillBanner');
+        banner.innerHTML = '&#128198; A previous report for this job was found and loaded below. Review, update as needed, then submit.';
+        banner.style.display = 'block';
+      }
+    }
+  }
+
+  async function fetchAndApplyPreviousSubmission(ref) {
+    try {
+      const response = await fetch(SUBMIT_ENDPOINT + '?ref=' + encodeURIComponent(ref));
+      const result = await response.json();
+      if (!result.found || !result.data) return false;
+      const data = result.data;
+
+      if (data.client) document.getElementById('clientName').value = data.client;
+      if (data.ref) document.getElementById('jobRef').value = data.ref;
+      if (data.address) document.getElementById('siteAddress').value = data.address;
+      if (data.date) document.getElementById('jobDate').value = data.date;
+      if (data.projectManager) document.getElementById('projectManager').value = data.projectManager;
+
+      // Rebuild the crew list from the stored comma-separated names
+      if (data.crew) {
+        document.getElementById('crewList').innerHTML = '';
+        const names = data.crew.split(',').map(n => n.trim()).filter(Boolean);
+        if (names.length > 0) {
+          names.forEach(name => addCrewRow(name));
+        } else {
+          addCrewRow();
+          addCrewRow();
+        }
+      }
+
+      if (data.startTime) document.getElementById('startTime').value = data.startTime;
+      if (data.finishTime) document.getElementById('finishTime').value = data.finishTime;
+      updateTotalTime();
+
+      // Individual (3rd+) installer times
+      if (data.individualTimesJson) {
+        try {
+          const individualTimes = JSON.parse(data.individualTimesJson);
+          individualTimes.forEach(entry => {
+            individualTimesData[entry.name] = {
+              sameAsMain: entry.sameAsMain !== false,
+              start: entry.start || '',
+              finish: entry.finish || ''
+            };
+          });
+          updateIndividualTimesPanel();
+        } catch (individualErr) {
+          // ignore malformed data, not worth blocking the rest of the restore
+        }
+      }
+
+      if (data.tasksDone) document.getElementById('tasksDone').value = data.tasksDone;
+
+      if (data.status === 'Completed') {
+        setStatus('complete');
+      } else if (data.status === 'Not Completed') {
+        setStatus('incomplete');
+      }
+      if (data.remainingWork) document.getElementById('remainingWork').value = data.remainingWork;
+      if (data.timeRequired) document.getElementById('timeRequired').value = data.timeRequired;
+      if (data.menRequired) document.getElementById('menRequired').value = data.menRequired;
+
+      // Sign-off — set after the crew list is rebuilt, so the dropdown has the right options
+      if (data.signoffName) {
+        updateSignoffNameOptions();
+        const select = document.getElementById('signoffName');
+        const hasMatch = Array.from(select.options).some(o => o.value === data.signoffName);
+        if (hasMatch) {
+          select.value = data.signoffName;
+        } else {
+          select.value = '__other__';
+          document.getElementById('signoffNameOther').style.display = 'block';
+          document.getElementById('signoffNameOther').value = data.signoffName;
+        }
+      }
+      if (data.signoffDate) document.getElementById('signoffDate').value = data.signoffDate;
+
+      return true;
+    } catch (err) {
+      return false;
     }
   }
 

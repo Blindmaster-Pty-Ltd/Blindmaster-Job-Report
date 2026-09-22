@@ -1474,7 +1474,7 @@
 
   async function fetchAndApplyPreviousSubmission(ref) {
     try {
-      const response = await fetch(SUBMIT_ENDPOINT + '?ref=' + encodeURIComponent(ref));
+      const response = await fetch(SUBMIT_ENDPOINT + '?ref=' + encodeURIComponent(ref) + '&_=' + Date.now(), { cache: 'no-store' });
       const result = await response.json();
       if (!result.found || !result.data) return false;
       const data = result.data;

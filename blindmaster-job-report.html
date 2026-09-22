@@ -658,6 +658,9 @@
     &#128198; Job details loaded from calendar appointment. Please check they're correct before submitting.
   </div>
 
+  <input type="hidden" id="calEventId">
+  <input type="hidden" id="calId">
+
   <!-- JOB DETAILS -->
   <div class="card">
     <div class="section-label">
@@ -680,6 +683,18 @@
       <div class="field">
         <label>Date of Installation <span class="req">*</span></label>
         <input type="date" id="jobDate">
+      </div>
+      <div class="field">
+        <label>Project Manager <span class="req">*</span></label>
+        <select id="projectManager">
+          <option value="" disabled selected>Select project manager</option>
+          <option value="Troy">Troy</option>
+          <option value="Andrew">Andrew</option>
+          <option value="Simon">Simon</option>
+          <option value="Polly">Polly</option>
+          <option value="Sam">Sam</option>
+          <option value="Jan">Jan</option>
+        </select>
       </div>
     </div>
   </div>
@@ -1428,6 +1443,17 @@
       }
     }
 
+    // Carry the calendar event/calendar IDs through invisibly, so the
+    // submitted report can be attached back to the right appointment.
+    const calEventIdParam = params.get('calEventId');
+    if (calEventIdParam) {
+      document.getElementById('calEventId').value = decodeURIComponent(calEventIdParam);
+    }
+    const calIdParam = params.get('calId');
+    if (calIdParam) {
+      document.getElementById('calId').value = decodeURIComponent(calIdParam);
+    }
+
     if (didPrefill) {
       document.getElementById('prefillBanner').style.display = 'block';
     }
@@ -1559,6 +1585,7 @@
       ['clientName', 'Client Name'],
       ['siteAddress', 'Site Address'],
       ['jobDate', 'Date of Installation'],
+      ['projectManager', 'Project Manager'],
       ['startTime', 'Start Time'],
       ['finishTime', 'Finish Time'],
       ['tasksDone', 'Description of Tasks Undertaken']
@@ -1619,6 +1646,9 @@
       formData.append('ref', document.getElementById('jobRef').value.trim());
       formData.append('address', document.getElementById('siteAddress').value.trim());
       formData.append('date', document.getElementById('jobDate').value);
+      formData.append('projectManager', document.getElementById('projectManager').value);
+      formData.append('calEventId', document.getElementById('calEventId').value);
+      formData.append('calId', document.getElementById('calId').value);
       formData.append('crew', crewNames.join(', '));
       formData.append('crewCount', document.getElementById('crewCount').textContent);
       formData.append('startTime', document.getElementById('startTime').value);

@@ -933,6 +933,10 @@
   .seg button + button { border-left: 1.5px solid var(--grey-line); }
   .seg button[aria-pressed="true"] { background: var(--navy); color: var(--white); }
   .seg-hint { font-size: 11.5px; color: var(--grey); margin-top: 5px; font-weight: 500; }
+  .time-readout { margin-top: 10px; font-size: 13px; color: var(--grey); font-weight: 600; min-height: 18px; }
+  .time-readout strong { color: var(--navy); font-size: 18px; font-weight: 800; margin-right: 6px; }
+  .route-points .field { margin: 12px 0 0; }
+  .hours-row { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--grey-line); }
 
   /* Receipts */
   .receipt-card {
@@ -959,6 +963,8 @@
   .receipt-photo.has-photo { border-style: solid; border-color: var(--gold-dark); }
   .receipt-thumb { max-width: 100%; max-height: 160px; border-radius: 4px; }
   .receipt-file-name { font-size: 11.5px; color: var(--grey); overflow-wrap: anywhere; }
+  .receipt-photo-label { font-size: 12px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.4px; }
+  .receipt-scan-note.scan-warn { color: var(--amber); font-weight: 700; }
 
   body.capturing-for-pdf .btn-ghost,
   body.capturing-for-pdf .btn-link,
@@ -1005,34 +1011,58 @@
         <label for="reportDate">Date <span class="req">*</span></label>
         <input type="date" id="reportDate" onchange="onDayChanged()">
       </div>
-      <div class="field full" style="margin-bottom:0;">
-        <label>Worked With Today</label>
-        <div id="crewList"></div>
-        <button type="button" class="add-btn" onclick="addCrewRow(); scheduleDraftSave();"><span class="plus">+</span> Add Installer</button>
-        <div class="hint">Other installers who were with you for some or all of the day.</div>
-      </div>
     </div>
   </div>
 
-  <!-- 2. HOURS -->
+  <!-- 2. HOURS & DRIVING ROUTE -->
   <div class="card">
     <div class="section-label">
       <div class="section-num">2</div>
-      <div class="section-title">Hours Worked</div>
+      <div class="section-title">Hours &amp; Driving Route</div>
     </div>
-    <div class="grid">
-      <div class="field">
-        <label for="startTime">Day Start <span class="req">*</span></label>
-        <select id="startTime" onchange="updateDayHours()"></select>
-        <div class="hint">Leaving the depot or home for the first job.</div>
+    <input type="hidden" id="routeStart" value="site">
+    <input type="hidden" id="routeEnd" value="site">
+    <input type="hidden" id="startTime">
+    <input type="hidden" id="finishTime">
+    <div class="route-points">
+      <div>
+        <label id="routeStartLabel">Day Started From</label>
+        <div class="seg" role="group" aria-labelledby="routeStartLabel" data-target="routeStart">
+          <button type="button" data-value="site">Site</button>
+          <button type="button" data-value="warehouse">Warehouse</button>
+        </div>
+        <div class="field" id="warehouseStartField" style="display:none;">
+          <label for="warehouseStartTime">Time Left the Warehouse <span class="req">*</span></label>
+          <select id="warehouseStartTime"></select>
+        </div>
+        <div class="field" id="siteStartField" style="display:none;">
+          <label for="siteStartTime">Time Arrived at First Job <span class="req">*</span></label>
+          <select id="siteStartTime"></select>
+        </div>
+        <div class="time-readout" id="dayStartReadout"></div>
       </div>
-      <div class="field">
-        <label for="finishTime">Day Finish <span class="req">*</span></label>
-        <select id="finishTime" onchange="updateDayHours()"></select>
-        <div class="hint">Back at the depot or home after the last job.</div>
+      <div>
+        <label id="routeEndLabel">Day Finished At</label>
+        <div class="seg" role="group" aria-labelledby="routeEndLabel" data-target="routeEnd">
+          <button type="button" data-value="site">Site</button>
+          <button type="button" data-value="warehouse">Warehouse</button>
+        </div>
+        <div class="field" id="warehouseFinishField" style="display:none;">
+          <label for="warehouseFinishTime">Time Back at the Warehouse <span class="req">*</span></label>
+          <select id="warehouseFinishTime"></select>
+        </div>
+        <div class="field" id="siteFinishField" style="display:none;">
+          <label for="siteFinishTime">Time Left Last Job <span class="req">*</span></label>
+          <select id="siteFinishTime"></select>
+        </div>
+        <div class="time-readout" id="dayFinishReadout"></div>
       </div>
+    </div>
+    <div class="seg-hint">Site: your day starts at your first job and finishes at your last. Warehouse (4/10 Orchard Road, Brookvale): the drive to or from it is added to your hours and route.</div>
+
+    <div class="grid hours-row">
       <div class="field">
-        <label for="breakMins">Unpaid Break</label>
+        <label for="breakMins">Break</label>
         <select id="breakMins" onchange="updateDayHours()">
           <option value="0">No break</option>
           <option value="15">15 minutes</option>
@@ -1045,8 +1075,17 @@
       <div class="field">
         <label for="totalHours">Total Hours Worked</label>
         <input type="text" id="totalHours" class="calc-output" readonly placeholder="Auto-calculated">
+        <div class="hint">Day start to day finish, minus the break.</div>
       </div>
     </div>
+
+    <div class="stats-row" id="routeStats" style="display:none;">
+      <div class="stat"><div class="k">Distance</div><div class="v" id="routeKm">—</div></div>
+      <div class="stat"><div class="k">Driving time</div><div class="v" id="routeTime">—</div></div>
+      <div class="stat"><div class="k">Stops</div><div class="v" id="routeStops">—</div></div>
+      <div class="stat"><div class="k">Actual (odometer)</div><div class="v" id="routeOdo">—</div></div>
+    </div>
+    <div id="routeContent"><p class="muted">Your driving route appears here once your appointments load.</p></div>
   </div>
 
   <!-- 3. JOBS -->
@@ -1073,44 +1112,10 @@
     <button type="button" class="add-btn" onclick="addJob(); scheduleDraftSave();"><span class="plus">+</span> Add a Job Not in the Calendar</button>
   </div>
 
-  <!-- 4. ROUTE -->
+  <!-- 4. MATERIALS -->
   <div class="card">
     <div class="section-label">
       <div class="section-num">4</div>
-      <div class="section-title">Driving Route</div>
-    </div>
-    <input type="hidden" id="routeStart" value="warehouse">
-    <input type="hidden" id="routeEnd" value="warehouse">
-    <div class="route-points">
-      <div>
-        <label id="routeStartLabel">Day Started From</label>
-        <div class="seg" role="group" aria-labelledby="routeStartLabel" data-target="routeStart">
-          <button type="button" data-value="warehouse">Warehouse</button>
-          <button type="button" data-value="home">Home</button>
-        </div>
-      </div>
-      <div>
-        <label id="routeEndLabel">Day Finished At</label>
-        <div class="seg" role="group" aria-labelledby="routeEndLabel" data-target="routeEnd">
-          <button type="button" data-value="warehouse">Warehouse</button>
-          <button type="button" data-value="home">Home</button>
-        </div>
-      </div>
-    </div>
-    <div class="seg-hint" style="margin:-10px 0 16px;">Warehouse is 4/10 Orchard Road, Brookvale. Home isn't mapped — the route starts or ends at your first or last job instead.</div>
-    <div class="stats-row" id="routeStats" style="display:none;">
-      <div class="stat"><div class="k">Distance</div><div class="v" id="routeKm">—</div></div>
-      <div class="stat"><div class="k">Driving time</div><div class="v" id="routeTime">—</div></div>
-      <div class="stat"><div class="k">Stops</div><div class="v" id="routeStops">—</div></div>
-      <div class="stat"><div class="k">Actual (odometer)</div><div class="v" id="routeOdo">—</div></div>
-    </div>
-    <div id="routeContent"><p class="muted">Your driving route appears here once your appointments load.</p></div>
-  </div>
-
-  <!-- 5. MATERIALS -->
-  <div class="card">
-    <div class="section-label">
-      <div class="section-num">5</div>
       <div class="section-title">Materials &amp; Stock</div>
     </div>
     <div class="field">
@@ -1127,10 +1132,10 @@
     </div>
   </div>
 
-  <!-- 6. VEHICLE -->
+  <!-- 5. VEHICLE -->
   <div class="card">
     <div class="section-label">
-      <div class="section-num">6</div>
+      <div class="section-num">5</div>
       <div class="section-title">Vehicle</div>
     </div>
     <div class="grid">
@@ -1157,22 +1162,22 @@
     </div>
   </div>
 
-  <!-- 7. WORK RECEIPTS -->
+  <!-- 6. WORK RECEIPTS -->
   <div class="card">
     <div class="section-label">
-      <div class="section-num">7</div>
+      <div class="section-num">6</div>
       <div class="section-title">Work Receipts</div>
     </div>
-    <div class="media-tab-note">Add one entry per receipt — fuel, parking, tolls, hardware. If it was bought for a particular job, enter the project number so it's filed with that job too.</div>
+    <div class="media-tab-note">Add one entry per receipt — fuel, parking, tolls, hardware. Say whether you paid with the work credit card or your own money, so anything you paid for yourself gets reimbursed. If it was bought for a particular job, enter the project number so it's filed with that job too.</div>
     <div id="receiptList"></div>
     <button type="button" class="add-btn" onclick="addReceipt(); scheduleDraftSave();"><span class="plus">+</span> Add Receipt</button>
     <div class="hint" id="receiptTotal" style="margin-top:10px;"></div>
   </div>
 
-  <!-- 8. NOTES + SIGN-OFF -->
+  <!-- 7. NOTES + SIGN-OFF -->
   <div class="card">
     <div class="section-label">
-      <div class="section-num">8</div>
+      <div class="section-num">7</div>
       <div class="section-title">Notes &amp; Sign-Off</div>
     </div>
     <div class="field">
@@ -1247,7 +1252,8 @@
   const OUTCOMES_NEEDING_DETAIL = RETURN_OUTCOMES.concat(['Other']);
 
   const DRAFT_PREFIX = 'blindmaster-daily-report:';
-  const SIMPLE_FIELDS = ['installerName', 'installerNameOther', 'reportDate', 'startTime', 'finishTime', 'breakMins',
+  const SIMPLE_FIELDS = ['installerName', 'installerNameOther', 'reportDate', 'breakMins',
+    'warehouseStartTime', 'warehouseFinishTime', 'siteStartTime', 'siteFinishTime',
     'materialsUsed', 'stockIssues', 'restockNeeded', 'vehicleRego', 'odoStart', 'odoEnd', 'vehicleIssues',
     'officeNotes', 'signoffDate', 'routeStart', 'routeEnd'];
   const CHECK_FIELDS = ['chkDeclare'];
@@ -1341,30 +1347,6 @@
 
   function updateSignedBy() { $('signedBy').textContent = getInstallerName() || '—'; }
 
-  // ================= CREW =================
-  function addCrewRow(name) {
-    const row = document.createElement('div');
-    row.className = 'crew-row';
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = 'Installer name';
-    input.setAttribute('list', 'staffList');
-    input.value = name || '';
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'icon-btn remove';
-    btn.setAttribute('aria-label', 'Remove installer');
-    btn.innerHTML = '&times;';
-    btn.addEventListener('click', () => { row.remove(); scheduleDraftSave(); });
-    row.appendChild(input);
-    row.appendChild(btn);
-    $('crewList').appendChild(row);
-  }
-
-  function getCrewNames() {
-    return Array.from(document.querySelectorAll('#crewList input')).map(i => i.value.trim()).filter(Boolean);
-  }
-
   // ================= HOURS / VEHICLE =================
   function getWorkedMinutes() {
     const d = diffMinutes($('startTime').value, $('finishTime').value);
@@ -1373,7 +1355,64 @@
     return Math.max(0, d - Number($('breakMins').value || 0));
   }
 
-  function updateDayHours() { $('totalHours').value = formatDuration(getWorkedMinutes()); }
+  // Earliest arrival and latest departure across today's jobs. Uses the
+  // Job Report's times where it's been submitted, otherwise the calendar
+  // appointment's times. Jobs that didn't go ahead are left out.
+  function getJobTimeBounds() {
+    let first = null, last = null;
+    const consider = (start, end) => {
+      if (start && start.time && (!first || toMinutes(start.time) < toMinutes(first.time))) first = start;
+      if (end && end.time && (!last || toMinutes(end.time) > toMinutes(last.time))) last = end;
+    };
+    calendarJobs.forEach(job => {
+      const d = job.djr || {};
+      const flags = calendarFlags[job.eventId] || {};
+      if (!d.submitted && flags.skipped) return;
+      consider(
+        d.submitted && d.arrive ? { time: d.arrive, from: 'arrived at ' + job.client + ' (Job Report)' }
+          : job.start ? { time: job.start, from: job.client + ' appointment' } : null,
+        d.submitted && d.depart ? { time: d.depart, from: 'left ' + job.client + ' (Job Report)' }
+          : job.end ? { time: job.end, from: job.client + ' appointment end' } : null
+      );
+    });
+    getManualJobsData().forEach(j => {
+      const name = j.client || 'job not in calendar';
+      consider(j.arrive ? { time: j.arrive, from: 'arrived at ' + name } : null,
+               j.depart ? { time: j.depart, from: 'left ' + name } : null);
+    });
+    return { first: first, last: last };
+  }
+
+  // Works out the day's start ('start') or finish ('end') time from the
+  // Site / Warehouse choice.
+  function resolveDayTime(which) {
+    const isStart = which === 'start';
+    const mode = $(isStart ? 'routeStart' : 'routeEnd').value;
+    const warehouseField = isStart ? 'warehouseStartTime' : 'warehouseFinishTime';
+    const siteField = isStart ? 'siteStartTime' : 'siteFinishTime';
+    if (mode === 'warehouse') {
+      return { time: $(warehouseField).value, from: isStart ? 'left the warehouse' : 'back at the warehouse',
+               field: warehouseField, label: isStart ? 'Time Left the Warehouse' : 'Time Back at the Warehouse' };
+    }
+    const bounds = getJobTimeBounds();
+    const auto = isStart ? bounds.first : bounds.last;
+    if (auto) return { time: auto.time, from: auto.from };
+    return { time: $(siteField).value, from: isStart ? 'arrived at first job' : 'left last job',
+             field: siteField, label: isStart ? 'Time Arrived at First Job' : 'Time Left Last Job' };
+  }
+
+  function updateDayHours() {
+    [['start', 'Start'], ['end', 'Finish']].forEach(([which, name]) => {
+      const mode = $(which === 'start' ? 'routeStart' : 'routeEnd').value;
+      const r = resolveDayTime(which);
+      $('warehouse' + name + 'Field').style.display = mode === 'warehouse' ? 'block' : 'none';
+      $('site' + name + 'Field').style.display = (mode === 'site' && r.field) ? 'block' : 'none';
+      const readout = $(which === 'start' ? 'dayStartReadout' : 'dayFinishReadout');
+      readout.innerHTML = r.time ? '<strong>' + escapeHtml(r.time) + '</strong>' + escapeHtml(r.from) : '';
+      $(which === 'start' ? 'startTime' : 'finishTime').value = r.time || '';
+    });
+    $('totalHours').value = formatDuration(getWorkedMinutes());
+  }
 
   function updateKm() {
     const s = parseFloat($('odoStart').value), e = parseFloat($('odoEnd').value);
@@ -1410,6 +1449,7 @@
       const url = SUBMIT_ENDPOINT + '?action=day&installer=' + encodeURIComponent(installer) +
         '&date=' + encodeURIComponent(date) +
         '&start=' + encodeURIComponent($('routeStart').value) + '&end=' + encodeURIComponent($('routeEnd').value) +
+        '&skip=' + encodeURIComponent(Object.keys(calendarFlags).filter(id => calendarFlags[id] && calendarFlags[id].skipped).join(',')) +
         '&_=' + Date.now();
       const res = await fetch(url, { cache: 'no-store' });
       const data = await res.json();
@@ -1510,7 +1550,11 @@
           styleCalendarCard(card, job);
           updateJobSummary();
         };
-        check.addEventListener('change', update);
+        check.addEventListener('change', () => {
+          update();
+          scheduleDraftSave();
+          loadDay({ quiet: true }); // redraw the route without this job
+        });
         reason.addEventListener('input', update);
         card.querySelector('.check-again').addEventListener('click', () => loadDay());
       }
@@ -1601,7 +1645,6 @@
   });
 
   // ================= ROUTE =================
-  const ROUTE_PREF_KEY = 'blindmaster-route-preference';
 
   function syncRouteButtons() {
     document.querySelectorAll('.seg').forEach(seg => {
@@ -1611,21 +1654,17 @@
   }
 
   function initRouteButtons() {
-    // Start from this installer's usual choice on this device
-    try {
-      const pref = JSON.parse(localStorage.getItem(ROUTE_PREF_KEY) || 'null');
-      if (pref) {
-        if (pref.start) $('routeStart').value = pref.start;
-        if (pref.end) $('routeEnd').value = pref.end;
-      }
-    } catch (e) {}
+    // Every new report starts at Site / Site. (A draft already in progress
+    // keeps whatever was chosen for that day.)
+    $('routeStart').value = 'site';
+    $('routeEnd').value = 'site';
     document.querySelectorAll('.seg button').forEach(btn => {
       btn.addEventListener('click', () => {
         const input = $(btn.closest('.seg').dataset.target);
         if (input.value === btn.dataset.value) return;
         input.value = btn.dataset.value;
         syncRouteButtons();
-        try { localStorage.setItem(ROUTE_PREF_KEY, JSON.stringify({ start: $('routeStart').value, end: $('routeEnd').value })); } catch (e) {}
+        updateDayHours();
         scheduleDraftSave();
         loadDay({ quiet: true });
       });
@@ -1658,7 +1697,7 @@
       '</tbody></table></div>';
     const startText = r.startsAtWarehouse ? 'Starts at the warehouse' : 'Starts at your first job';
     const endText = r.endsAtWarehouse ? 'finishes at the warehouse' : 'finishes at your last job';
-    html += '<p class="muted">' + startText + ', ' + endText + ', with jobs in appointment order. This is the planned route from the calendar addresses — your odometer reading in section 6 is the actual distance.' +
+    html += '<p class="muted">' + startText + ', ' + endText + ', with jobs in appointment order. This is the planned route from the calendar addresses — your odometer reading in section 5 is the actual distance.' +
       (r.missingAddresses && r.missingAddresses.length ? ' Not on the map (no address in the appointment): ' + escapeHtml(r.missingAddresses.join(', ')) + '.' : '') +
       '</p>';
     html += '<p style="margin-top:10px;"><a class="text-link" href="' + escapeHtml(r.mapsLink) + '" target="_blank" rel="noopener">Open this route in Google Maps</a></p>';
@@ -1834,6 +1873,7 @@
     $('statCompleted').textContent = s.completed;
     $('statReturn').textContent = s.returns;
     $('statPending').textContent = s.pending;
+    updateDayHours();
   }
 
   // ================= WORK RECEIPTS =================
@@ -1854,6 +1894,7 @@
       </div>
       <div class="receipt-body">
         <div class="receipt-photo">
+          <div class="receipt-photo-label">Receipt Photo <span class="req">*</span></div>
           <img class="receipt-thumb" alt="Receipt photo" hidden>
           <div class="receipt-file-name"></div>
           <label class="file-btn" for="receiptFile-${id}" tabindex="0">Add Photo</label>
@@ -1862,13 +1903,22 @@
         <div>
           <div class="grid">
             <div class="field">
-              <label for="receiptAmount-${id}">Amount ($)</label>
+              <label for="receiptAmount-${id}">Amount ($) <span class="req">*</span></label>
               <input type="number" id="receiptAmount-${id}" class="receipt-amount" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+              <div class="hint receipt-scan-note">Filled in from the photo automatically.</div>
             </div>
             <div class="field">
               <label for="receiptProject-${id}">Project Number</label>
               <input type="text" id="receiptProject-${id}" class="receipt-project" inputmode="numeric" placeholder="e.g. 28643">
               <div class="hint">Only if it's for a particular job.</div>
+            </div>
+            <div class="field full">
+              <label for="receiptPaid-${id}">Paid With <span class="req">*</span></label>
+              <select id="receiptPaid-${id}" class="receipt-paid">
+                <option value="">Select</option>
+                <option value="Work credit card">Work credit card</option>
+                <option value="Personally paid">Personally paid — reimburse me</option>
+              </select>
             </div>
             <div class="field full">
               <label for="receiptPurpose-${id}">What It Was For <span class="req">*</span></label>
@@ -1882,6 +1932,7 @@
     card.querySelector('.receipt-amount').value = data.amount || '';
     card.querySelector('.receipt-project').value = data.project || '';
     card.querySelector('.receipt-purpose').value = data.purpose || '';
+    card.querySelector('.receipt-paid').value = data.paidWith || '';
     if (data.hadPhoto) {
       card.querySelector('.receipt-file-name').textContent = 'Photo needs adding again before you submit.';
     }
@@ -1907,10 +1958,53 @@
       receiptFiles[id] = { name: file.name, mimeType: processed.mimeType, dataUrl: processed.dataUrl };
       showReceiptPreview(card, receiptFiles[id]);
       scheduleDraftSave();
+      readReceiptTotal(card, id);
     });
+    card.querySelector('.receipt-amount').addEventListener('input', function () { this.dataset.autofilled = 'no'; });
     card.addEventListener('input', updateReceiptTotal);
+    card.addEventListener('change', updateReceiptTotal);
     renumberReceipts();
     return card;
+  }
+
+  // Sends the receipt photo to the Daily Report script, which reads the
+  // text and sends back the total. Fills the Amount field if it's empty (or
+  // was filled from an earlier photo); never overwrites a typed amount.
+  async function readReceiptTotal(card, id) {
+    const file = receiptFiles[id];
+    const note = card.querySelector('.receipt-scan-note');
+    const amountInput = card.querySelector('.receipt-amount');
+    if (!file || !endpointReady()) { note.textContent = 'Type in the total from the receipt.'; return; }
+    note.classList.remove('scan-warn');
+    note.textContent = 'Reading the total from the receipt…';
+    try {
+      const fd = new FormData();
+      fd.append('action', 'scanReceipt');
+      fd.append('dataUrl', file.dataUrl);
+      const res = await fetch(SUBMIT_ENDPOINT, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (receiptFiles[id] !== file) return; // photo was changed while reading
+      if (data.success && data.amount) {
+        if (!amountInput.value || amountInput.dataset.autofilled === 'yes') {
+          amountInput.value = data.amount;
+          amountInput.dataset.autofilled = 'yes';
+          note.textContent = 'Read from the receipt — check it matches the total.';
+        } else if (Number(amountInput.value) !== Number(data.amount)) {
+          note.textContent = 'The receipt looks like $' + data.amount + ', but $' + amountInput.value + ' is entered — check which is right.';
+          note.classList.add('scan-warn');
+        } else {
+          note.textContent = 'Matches the receipt total.';
+        }
+        updateReceiptTotal();
+        scheduleDraftSave();
+      } else {
+        note.textContent = "Couldn't read the total" + (data.error ? ' (' + data.error + ')' : '') + ' — please type it in.';
+        note.classList.add('scan-warn');
+      }
+    } catch (err) {
+      note.textContent = "Couldn't read the receipt right now — please type the total in.";
+      note.classList.add('scan-warn');
+    }
   }
 
   function showReceiptPreview(card, file) {
@@ -1976,16 +2070,30 @@
         amount: card.querySelector('.receipt-amount').value.trim(),
         purpose: card.querySelector('.receipt-purpose').value.trim(),
         project: card.querySelector('.receipt-project').value.trim(),
+        paidWith: card.querySelector('.receipt-paid').value,
         hasPhoto: !!receiptFiles[id]
       };
     });
   }
 
-  function isBlankReceipt(r) { return !r.hasPhoto && !r.amount && !r.purpose && !r.project; }
+  function isBlankReceipt(r) { return !r.hasPhoto && !r.amount && !r.purpose && !r.project && !r.paidWith; }
+
+  function receiptTotals(receipts) {
+    let total = 0, reimburse = 0;
+    receipts.forEach(r => {
+      const amount = parseFloat(r.amount) || 0;
+      total += amount;
+      if (r.paidWith === 'Personally paid') reimburse += amount;
+    });
+    return { total: total, reimburse: reimburse };
+  }
 
   function updateReceiptTotal() {
     const total = getReceiptsData().reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
-    $('receiptTotal').textContent = total > 0 ? 'Total of receipts: $' + total.toFixed(2) : '';
+    const totals = receiptTotals(getReceiptsData());
+    $('receiptTotal').textContent = total > 0
+      ? 'Total of receipts: $' + total.toFixed(2) + (totals.reimburse > 0 ? ' — $' + totals.reimburse.toFixed(2) + ' to be reimbursed to you' : '')
+      : '';
   }
 
   // ================= VOICE DICTATION =================
@@ -2095,11 +2203,10 @@
     const state = { savedAt: new Date().toISOString(), fields: {}, checks: {} };
     SIMPLE_FIELDS.forEach(id => { state.fields[id] = $(id).value; });
     CHECK_FIELDS.forEach(id => { state.checks[id] = $(id).checked; });
-    state.crew = getCrewNames();
     state.manualJobs = getManualJobsData();
     state.calendarFlags = calendarFlags;
     state.daySnapshot = daySnapshot;
-    state.receipts = getReceiptsData().map(r => ({ amount: r.amount, purpose: r.purpose, project: r.project, hadPhoto: r.hasPhoto }));
+    state.receipts = getReceiptsData().map(r => ({ amount: r.amount, purpose: r.purpose, project: r.project, paidWith: r.paidWith, hadPhoto: r.hasPhoto }));
     return state;
   }
 
@@ -2111,9 +2218,7 @@
       if (state.checks && state.checks[id] !== undefined) $(id).checked = !!state.checks[id];
     });
     handleInstallerChange();
-
-    $('crewList').innerHTML = '';
-    (state.crew && state.crew.length ? state.crew : ['']).forEach(n => addCrewRow(n));
+    ['routeStart', 'routeEnd'].forEach(id => { if ($(id).value !== 'warehouse') $(id).value = 'site'; });
 
     $('jobList').innerHTML = '';
     (state.manualJobs || []).forEach(j => addJob(j));
@@ -2317,8 +2422,9 @@
     const missing = [];
     if (!getInstallerName()) missing.push('Your Name');
     if (!$('reportDate').value) missing.push('Date');
-    if (!$('startTime').value) missing.push('Day Start');
-    if (!$('finishTime').value) missing.push('Day Finish');
+    const dayStart = resolveDayTime('start'), dayFinish = resolveDayTime('end');
+    if (!dayStart.time) missing.push('Day Start — ' + (dayStart.label || 'time'));
+    if (!dayFinish.time) missing.push('Day Finish — ' + (dayFinish.label || 'time'));
     if (getWorkedMinutes() === -1) missing.push('Day Finish must be after Day Start');
 
     const jobs = getJobsData();
@@ -2341,7 +2447,9 @@
     getReceiptsData().forEach((r, i) => {
       if (isBlankReceipt(r)) return;
       if (!r.hasPhoto) missing.push('Receipt ' + (i + 1) + ' — photo of the receipt');
+      if (!r.amount) missing.push('Receipt ' + (i + 1) + ' — Amount');
       if (!r.purpose) missing.push('Receipt ' + (i + 1) + ' — What It Was For');
+      if (!r.paidWith) missing.push('Receipt ' + (i + 1) + ' — Paid With (work card or personally paid)');
     });
 
     const s = parseFloat($('odoStart').value), e = parseFloat($('odoEnd').value);
@@ -2379,7 +2487,6 @@
       const fd = new FormData();
       fd.append('installer', getInstallerName());
       fd.append('reportDate', $('reportDate').value);
-      fd.append('crew', getCrewNames().join(', '));
       fd.append('startTime', $('startTime').value);
       fd.append('finishTime', $('finishTime').value);
       fd.append('breakMins', $('breakMins').value);
@@ -2397,15 +2504,19 @@
       }
       fd.append('routeStart', $('routeStart').value);
       fd.append('routeEnd', $('routeEnd').value);
+      fd.append('dayStartSource', resolveDayTime('start').from);
+      fd.append('dayFinishSource', resolveDayTime('end').from);
       ['materialsUsed', 'stockIssues', 'restockNeeded', 'vehicleRego', 'odoStart', 'odoEnd', 'kmTravelled',
         'vehicleIssues', 'officeNotes', 'signoffDate'].forEach(id => fd.append(id, $(id).value.trim()));
       fd.append('chkDeclare', $('chkDeclare').checked ? 'Yes' : 'No');
       fd.append('hasSignature', hasSignature ? 'Yes' : 'No');
-      fd.append('receiptsSummaryJson', JSON.stringify(receipts.map(r => ({ amount: r.amount, purpose: r.purpose, project: r.project }))));
+      const totals = receiptTotals(receipts);
+      fd.append('receiptsSummaryJson', JSON.stringify(receipts.map(r => ({ amount: r.amount, purpose: r.purpose, project: r.project, paidWith: r.paidWith }))));
       fd.append('receiptsTotal', receiptsTotal ? receiptsTotal.toFixed(2) : '');
+      fd.append('reimburseTotal', totals.reimburse ? totals.reimburse.toFixed(2) : '');
       fd.append('receiptsJson', JSON.stringify(receipts.map(r => {
         const f = receiptFiles[r.id];
-        return { amount: r.amount, purpose: r.purpose, project: r.project, name: f ? f.name : '', mimeType: f ? f.mimeType : '', dataUrl: f ? f.dataUrl : '' };
+        return { amount: r.amount, purpose: r.purpose, project: r.project, paidWith: r.paidWith, name: f ? f.name : '', mimeType: f ? f.mimeType : '', dataUrl: f ? f.dataUrl : '' };
       })));
 
       try {
@@ -2527,8 +2638,10 @@
   // ================= INIT =================
   window.addEventListener('DOMContentLoaded', () => {
     populateInstallerOptions();
-    $('startTime').innerHTML = buildTimeOptionsHTML();
-    $('finishTime').innerHTML = buildTimeOptionsHTML();
+    ['warehouseStartTime', 'warehouseFinishTime', 'siteStartTime', 'siteFinishTime'].forEach(id => {
+      $(id).innerHTML = buildTimeOptionsHTML();
+      $(id).addEventListener('change', updateDayHours);
+    });
 
     const today = localDateString();
     const params = new URLSearchParams(window.location.search);
@@ -2548,7 +2661,6 @@
       if (params.get('installer')) setInstallerName(params.get('installer'));
       showRestoredBanner(draft);
     } else {
-      addCrewRow();
       const olderKey = listDraftKeys().find(k => k !== targetKey);
       const olderDraft = olderKey ? readDraft(olderKey) : null;
       if (olderDraft) showUnsubmittedBanner(olderKey, olderDraft);

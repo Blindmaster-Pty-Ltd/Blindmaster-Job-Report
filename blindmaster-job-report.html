@@ -1344,7 +1344,7 @@
   }
 
   // default date fields to today, then apply any calendar prefill from the URL
-  window.addEventListener('DOMContentLoaded', async () => {
+  window.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('jobDate').value = today;
     document.getElementById('signoffDate').value = today;
@@ -1352,8 +1352,16 @@
     populateTimeOptions('finishTime');
     populateHoursRequired();
     populateMenRequired();
-    await applyPrefillFromUrl();
+
+    // Set up the signature pad right away — this must never depend on the
+    // prefill/draft-lookup network call below, so a slow network or an
+    // unexpected error there can never prevent it from working.
     initSignaturePad();
+
+    applyPrefillFromUrl().catch(err => {
+      // Prefill/draft-restore is best-effort — the report is still fully
+      // usable blank if this fails for any reason.
+    });
   });
 
   function buildTimeOptionsHTML() {
@@ -1658,6 +1666,17 @@
     return pdf.output('datauristring');
   }
 
+  function describeError(err) {
+    if (!err) return 'Unknown error';
+    if (typeof err === 'string') return err;
+    if (err.message) return err.message;
+    try {
+      return JSON.stringify(err);
+    } catch (e) {
+      return String(err);
+    }
+  }
+
   function getGeolocation(timeoutMs) {
     return new Promise(resolve => {
       if (!navigator.geolocation) {
@@ -1802,14 +1821,35 @@
       formData.append('signoffName', getSignoffName());
       formData.append('signoffDate', document.getElementById('signoffDate').value);
 
-      const mediaPayload = await collectMediaAsBase64();
+      let mediaPayload;
+      try {
+        mediaPayload = await collectMediaAsBase64();
+      } catch (mediaErr) {
+        throw new Error('Failed while processing attached photos/video/audio: ' + describeError(mediaErr) + '. Try removing an attachment (especially a large video) and submitting again.');
+      }
       formData.append('mediaFilesJson', JSON.stringify(mediaPayload));
 
-      const renderedPdfDataUrl = await generateReportPdfDataUrl();
+      let renderedPdfDataUrl;
+      try {
+        renderedPdfDataUrl = await generateReportPdfDataUrl();
+      } catch (pdfErr) {
+        throw new Error('Failed while generating the report PDF: ' + describeError(pdfErr) + '. This can happen on some mobile browsers — try again, or use "Print / Save as PDF" and send this report to the office manually.');
+      }
       formData.append('renderedPdfDataUrl', renderedPdfDataUrl);
 
-      const response = await fetch(SUBMIT_ENDPOINT, { method: 'POST', body: formData });
-      const result = await response.json();
+      let response;
+      try {
+        response = await fetch(SUBMIT_ENDPOINT, { method: 'POST', body: formData });
+      } catch (networkErr) {
+        throw new Error('Could not reach the submission server: ' + describeError(networkErr) + '. Check your internet connection and try again, or use "Print / Save as PDF" and send this report to the office manually.');
+      }
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseErr) {
+        throw new Error('The submission server sent back an unexpected response (HTTP ' + response.status + '). This usually means the Apps Script deployment needs attention — try again shortly, or use "Print / Save as PDF" and send this report to the office manually.');
+      }
 
       if (result.success) {
         const folderNote = result.folderUrl ? '\n\nSaved to: ' + result.folderName : '';
@@ -1822,7 +1862,7 @@
         submitBtn.textContent = 'Submit Report';
       }
     } catch (err) {
-      showBanner('error', 'Could not reach the submission server. Check your internet connection and try again, or use "Print / Save as PDF" and send this report to the office manually.\n\n(' + err.message + ')');
+      showBanner('error', describeError(err));
       submitBtn.disabled = false;
       submitBtn.textContent = 'Submit Report';
     }

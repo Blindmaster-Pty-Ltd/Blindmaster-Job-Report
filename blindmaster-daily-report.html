@@ -1,0 +1,2575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blindmaster | Daily Installation Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+  :root {
+    --navy: #0B1E3D;
+    --navy-light: #14315F;
+    --navy-pale: #EEF1F7;
+    --gold: #C6A15B;
+    --gold-dark: #A6813F;
+    --gold-pale: #F7EFDE;
+    --ink: #1B1F27;
+    --grey: #6B7280;
+    --grey-line: #DDE1E8;
+    --white: #FFFFFF;
+    --green: #1E7A4C;
+    --green-pale: #E8F5EE;
+    --amber: #B4772A;
+    --amber-pale: #FBF0E1;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--navy-pale);
+    color: var(--ink);
+    padding: 0 0 60px 0;
+  }
+
+  .header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: var(--white);
+    padding: 32px 24px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::after {
+    content: "";
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 6px;
+    background: var(--gold);
+  }
+
+  .header-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .brand-mark {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .brand-logo {
+    height: 28px;
+    width: auto;
+    display: block;
+  }
+
+  .brand-name {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .brand-name .dot { color: var(--gold); }
+
+  .brand-sub {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-pale);
+    font-weight: 600;
+    opacity: 0.85;
+  }
+
+  .doc-title {
+    text-align: right;
+  }
+
+  .doc-title h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .doc-title .ref {
+    font-size: 12px;
+    color: var(--gold-pale);
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+
+  .container {
+    max-width: 880px;
+    margin: -18px auto 0;
+    padding: 0 24px;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(11,30,61,0.08), 0 8px 24px rgba(11,30,61,0.06);
+    padding: 24px 24px 26px;
+    margin-bottom: 20px;
+    border: 1px solid var(--grey-line);
+  }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .section-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    .doc-title { text-align: left; }
+    .header-inner { flex-direction: column; }
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+  }
+
+  .field { margin-bottom: 16px; }
+
+  input[type="text"],
+  input[type="time"],
+  input[type="date"],
+  input[type="number"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--grey-line);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--white);
+    transition: border-color 0.15s;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 90px;
+  }
+
+  .hint {
+    font-size: 11.5px;
+    color: var(--grey);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .dictate-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--navy);
+    color: var(--white);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .dictate-btn:hover { background: var(--navy-light); }
+
+  .dictate-btn.recording {
+    background: #C0392B;
+    animation: pulseRec 1.4s infinite;
+  }
+
+  @keyframes pulseRec {
+    0% { box-shadow: 0 0 0 0 rgba(192,57,43,0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(192,57,43,0); }
+    100% { box-shadow: 0 0 0 0 rgba(192,57,43,0); }
+  }
+
+  /* Crew */
+  .crew-count-banner {
+    background: var(--navy-pale);
+    border: 1px dashed var(--gold-dark);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .crew-count-banner .count-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .crew-count-banner .count-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--navy);
+  }
+
+  .crew-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+  }
+
+  .crew-row input { flex: 1; }
+
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    border: 1.5px solid var(--grey-line);
+    background: var(--white);
+    color: var(--grey);
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+
+  .icon-btn.remove:hover {
+    border-color: #C0392B;
+    color: #C0392B;
+    background: #FDEDEC;
+  }
+
+  .add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--navy);
+    color: var(--white);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background 0.15s;
+  }
+
+  .add-btn:hover { background: var(--navy-light); }
+
+  .add-btn .plus { color: var(--gold); font-size: 16px; }
+
+  /* Toggle status */
+  .status-toggle {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .status-option {
+    flex: 1;
+    border: 2px solid var(--grey-line);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--white);
+  }
+
+  .status-option .icon { font-size: 22px; display: block; margin-bottom: 6px; }
+  .status-option .label { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+  .status-option.complete.active {
+    border-color: var(--green);
+    background: var(--green-pale);
+  }
+  .status-option.complete.active .label,
+  .status-option.complete.active .icon { color: var(--green); }
+
+  .status-option.incomplete.active {
+    border-color: var(--amber);
+    background: var(--amber-pale);
+  }
+  .status-option.incomplete.active .label,
+  .status-option.incomplete.active .icon { color: var(--amber); }
+
+  .status-option .label { color: var(--grey); }
+  .status-option .icon { color: var(--grey); }
+
+  #remaining-work-panel {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--grey-line);
+    display: none;
+  }
+
+  #remaining-work-panel.show { display: block; }
+
+  /* Media capture */
+  .media-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+
+  .media-tab-note {
+    font-size: 12.5px;
+    color: var(--grey);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .media-uploader {
+    border: 2px dashed var(--grey-line);
+    border-radius: 8px;
+    padding: 22px;
+    text-align: center;
+    margin-bottom: 14px;
+    background: var(--navy-pale);
+    transition: border-color 0.15s;
+  }
+
+  .media-uploader.has-files { border-color: var(--gold-dark); background: var(--gold-pale); }
+
+  .media-uploader .m-icon { font-size: 26px; margin-bottom: 8px; }
+  .media-uploader .m-title { font-weight: 700; font-size: 13.5px; color: var(--navy); margin-bottom: 3px; }
+  .media-uploader .m-sub { font-size: 11.5px; color: var(--grey); margin-bottom: 12px; }
+
+  .file-input-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  .file-btn {
+    display: inline-block;
+    background: var(--navy);
+    color: var(--white);
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .file-btn:hover { background: var(--navy-light); }
+
+  input[type="file"] { display: none; }
+
+  .file-list {
+    margin-top: 12px;
+    text-align: left;
+  }
+
+  .file-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--white);
+    border: 1px solid var(--grey-line);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    font-size: 12.5px;
+  }
+
+  .file-chip .fname {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-chip .remove-file {
+    background: none;
+    border: none;
+    color: var(--grey);
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 0 4px;
+  }
+  .file-chip .remove-file:hover { color: #C0392B; }
+
+  .media-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+
+  @media (max-width: 700px) {
+    .media-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Signoff */
+  .sig-pad-wrap {
+    position: relative;
+    border: 2px solid var(--grey-line);
+    border-radius: 8px;
+    background: var(--white);
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+
+  .sig-pad {
+    display: block;
+    width: 100%;
+    height: 180px;
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  .sig-pad-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--grey);
+    font-size: 13px;
+    font-weight: 600;
+    pointer-events: none;
+  }
+
+  .clear-sig-btn {
+    background: var(--white);
+    color: var(--navy);
+    border: 1.5px solid var(--grey-line);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .clear-sig-btn:hover { border-color: var(--navy); }
+
+  .status-banner {
+    max-width: 880px;
+    margin: 0 auto 12px;
+    padding: 0 24px;
+  }
+
+  .status-banner .inner {
+    display: none;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+
+  .status-banner.error .inner {
+    display: block;
+    background: var(--amber-pale);
+    color: var(--amber);
+    border: 1px solid var(--amber);
+    white-space: pre-line;
+  }
+
+  .status-banner.success .inner {
+    display: block;
+    background: var(--green-pale);
+    color: var(--green);
+    border: 1px solid var(--green);
+    white-space: pre-line;
+  }
+
+  .footer-note {
+    max-width: 880px;
+    margin: 24px auto 0;
+    padding: 0 24px;
+    font-size: 11.5px;
+    color: var(--grey);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .submit-row {
+    max-width: 880px;
+    margin: 8px auto 0;
+    padding: 0 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    padding: 14px 30px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: var(--gold-dark); color: var(--white); }
+
+  .btn-secondary {
+    background: var(--white);
+    color: var(--navy);
+    border: 1.5px solid var(--grey-line);
+    padding: 14px 24px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-secondary:hover { border-color: var(--navy); }
+
+  .req { color: var(--gold-dark); }
+
+  #print-summary { display: none; }
+
+  @media print {
+    body { background: var(--white); padding: 0; }
+    .header::after { display: none; }
+    .card { box-shadow: none; border: 1px solid var(--grey-line); break-inside: avoid; }
+    .submit-row, .add-btn, .icon-btn, .file-btn, .file-input-wrap { display: none !important; }
+    .container { margin-top: 0; }
+  }
+
+  /* Applied briefly while generating the submitted PDF snapshot, so it
+     matches what "Print / Save as PDF" produces — hides buttons and
+     interactive-only controls that shouldn't appear in the saved report. */
+  body.capturing-for-pdf { background: var(--white); padding: 0; }
+  body.capturing-for-pdf .header::after { display: none; }
+  body.capturing-for-pdf .card { box-shadow: none; border: 1px solid var(--grey-line); }
+  body.capturing-for-pdf .submit-row,
+  body.capturing-for-pdf .add-btn,
+  body.capturing-for-pdf .icon-btn,
+  body.capturing-for-pdf .file-btn,
+  body.capturing-for-pdf .file-input-wrap,
+  body.capturing-for-pdf .dictate-btn,
+  body.capturing-for-pdf #statusBanner,
+  body.capturing-for-pdf .clear-sig-btn { display: none !important; }
+  body.capturing-for-pdf textarea { display: none !important; }
+
+  /* Stand-in for a textarea during PDF capture — html2canvas doesn't wrap
+     text inside real <textarea> elements correctly, so we swap in a plain
+     wrapped text block with matching styling just for the snapshot. */
+  .pdf-textarea-clone {
+    display: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--white);
+    border: 1.5px solid var(--grey-line);
+    border-radius: 6px;
+    padding: 10px 12px;
+    box-sizing: border-box;
+  }
+  body.capturing-for-pdf .pdf-textarea-clone { display: block; }
+  body.capturing-for-pdf .container { margin-top: 0; }
+
+
+  /* ---------- Daily report additions ---------- */
+  .field.full { grid-column: 1 / -1; }
+
+  .label-with-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .calc-output {
+    background: var(--navy-pale) !important;
+    font-weight: 700;
+    color: var(--navy) !important;
+    cursor: default;
+  }
+
+  .draft-status {
+    font-size: 11.5px;
+    color: var(--grey);
+    font-weight: 600;
+    text-align: right;
+    margin: 0 2px 12px;
+    min-height: 16px;
+  }
+
+  .draft-banner {
+    display: none;
+    background: var(--gold-pale);
+    border: 1px solid var(--gold-dark);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 12.5px;
+    color: var(--navy);
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  .draft-banner.show { display: block; }
+  .draft-banner .draft-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .draft-banner button {
+    background: var(--white);
+    color: var(--navy);
+    border: 1.5px solid var(--gold-dark);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .draft-banner button.primary { background: var(--navy); color: var(--white); border-color: var(--navy); }
+
+  /* Day summary figures */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .stat {
+    background: var(--navy-pale);
+    border: 1px dashed var(--gold-dark);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .stat .k { font-size: 11px; font-weight: 700; color: var(--navy); }
+  .stat .v { font-size: 22px; font-weight: 800; color: var(--navy); margin-top: 2px; }
+  .stat.warn .v { color: var(--amber); }
+  @media (max-width: 600px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+
+  /* Job cards */
+  .job-card {
+    border: 1.5px solid var(--grey-line);
+    border-left: 4px solid var(--gold);
+    border-radius: 8px;
+    padding: 16px 16px 2px;
+    margin-bottom: 14px;
+    background: #FCFCFD;
+  }
+  .job-card.is-complete { border-left-color: var(--green); }
+  .job-card.needs-return { border-left-color: var(--amber); }
+  .job-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .job-num { font-weight: 800; color: var(--navy); font-size: 15px; }
+  .job-duration-row {
+    font-size: 12.5px;
+    color: var(--grey);
+    font-weight: 600;
+    margin: -4px 0 14px;
+  }
+  .job-duration-row strong { color: var(--navy); }
+  .job-outstanding-panel {
+    border-top: 1px dashed var(--grey-line);
+    padding-top: 14px;
+  }
+
+  /* Checklist */
+  .check-list { display: flex; flex-direction: column; gap: 10px; }
+  label.check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--grey-line);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: 0;
+    margin: 0;
+    background: var(--white);
+  }
+  label.check-item input { width: 20px; height: 20px; margin: 0; flex-shrink: 0; accent-color: var(--green); }
+  label.check-item.checked { border-color: var(--green); background: var(--green-pale); }
+
+  #incidentPanel { display: none; }
+  #incidentPanel.show { display: block; }
+
+  .signed-by {
+    font-size: 13px;
+    color: var(--navy);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+
+  button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, .file-btn:focus-visible {
+    outline: 2px solid var(--gold-dark);
+    outline-offset: 2px;
+  }
+
+  body.capturing-for-pdf .draft-banner,
+  body.capturing-for-pdf .draft-status,
+  body.capturing-for-pdf .hint { display: none !important; }
+
+  /* ---------- Calendar-linked jobs ---------- */
+  .day-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: var(--navy-pale);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .btn-ghost {
+    background: var(--white);
+    color: var(--navy);
+    border: 1.5px solid var(--navy);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-ghost:disabled { opacity: 0.5; cursor: default; }
+  .btn-link {
+    display: inline-block;
+    background: var(--gold);
+    color: var(--navy);
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 800;
+    text-decoration: none;
+  }
+  .btn-link:hover { background: var(--gold-dark); color: var(--white); }
+  .text-link { font-size: 12.5px; font-weight: 700; color: var(--navy-light); }
+
+  .badge {
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .badge.ok { background: var(--green-pale); color: var(--green); }
+  .badge.todo { background: var(--amber-pale); color: var(--amber); }
+  .badge.skip { background: var(--navy-pale); color: var(--grey); }
+  .badge.manual { background: var(--navy-pale); color: var(--navy); }
+
+  .job-card.is-pending { border-left-color: var(--amber); background: #FFFCF7; }
+  .job-card.is-skipped { border-left-color: var(--grey); }
+
+  .facts { display: grid; grid-template-columns: 130px 1fr; gap: 6px 12px; font-size: 13.5px; margin-bottom: 14px; }
+  .facts dt { font-weight: 700; color: var(--grey); font-size: 12.5px; }
+  .facts dd { margin: 0; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .facts dd.warn { color: #C0392B; font-weight: 700; }
+  @media (max-width: 600px) { .facts { grid-template-columns: 1fr; gap: 2px; } .facts dd { margin-bottom: 8px; } }
+
+  .pending-box {
+    background: var(--amber-pale);
+    border: 1px solid var(--amber);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .pending-box strong { color: var(--amber); }
+  .pending-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+  .skip-panel { margin-top: 12px; }
+  .job-card .check-item { margin-bottom: 14px; }
+
+  /* Reminder pop-up */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(11, 30, 61, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 50;
+  }
+  .modal[hidden] { display: none; }
+  .modal-box {
+    background: var(--white);
+    border-radius: 12px;
+    border-top: 6px solid var(--amber);
+    max-width: 460px;
+    width: 100%;
+    padding: 22px 22px 18px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal-box h2 { margin: 0 0 8px; font-size: 18px; color: var(--navy); }
+  .modal-box p { margin: 0 0 14px; font-size: 13.5px; line-height: 1.5; color: var(--ink); }
+  .reminder-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px solid var(--grey-line);
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .modal-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+  /* Route */
+  .route-map {
+    display: block;
+    width: 100%;
+    max-width: 640px;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--grey-line);
+    margin-bottom: 14px;
+  }
+  .legs-wrap { overflow-x: auto; margin-bottom: 12px; }
+  .legs { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .legs th { text-align: left; font-size: 11.5px; color: var(--grey); font-weight: 700; padding: 6px 8px; border-bottom: 1.5px solid var(--grey-line); }
+  .legs td { padding: 7px 8px; border-bottom: 1px solid var(--grey-line); }
+  .legs td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pin {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--gold); color: var(--navy); font-size: 11px; font-weight: 800; margin-right: 6px;
+  }
+  .pin.depot { background: var(--navy); color: var(--white); }
+  .muted { font-size: 13px; color: var(--grey); margin: 0; line-height: 1.5; }
+
+  /* Start / finish choice */
+  .route-points { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+  @media (max-width: 600px) { .route-points { grid-template-columns: 1fr; } }
+  .seg { display: flex; border: 1.5px solid var(--grey-line); border-radius: 8px; overflow: hidden; }
+  .seg button {
+    flex: 1;
+    background: var(--white);
+    border: none;
+    padding: 11px 10px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--grey);
+    cursor: pointer;
+  }
+  .seg button + button { border-left: 1.5px solid var(--grey-line); }
+  .seg button[aria-pressed="true"] { background: var(--navy); color: var(--white); }
+  .seg-hint { font-size: 11.5px; color: var(--grey); margin-top: 5px; font-weight: 500; }
+
+  /* Receipts */
+  .receipt-card {
+    border: 1.5px solid var(--grey-line);
+    border-radius: 8px;
+    padding: 14px 16px 2px;
+    margin-bottom: 14px;
+  }
+  .receipt-body { display: grid; grid-template-columns: 150px 1fr; gap: 16px; }
+  @media (max-width: 600px) { .receipt-body { grid-template-columns: 1fr; } }
+  .receipt-photo {
+    border: 2px dashed var(--grey-line);
+    border-radius: 8px;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .receipt-photo.has-photo { border-style: solid; border-color: var(--gold-dark); }
+  .receipt-thumb { max-width: 100%; max-height: 160px; border-radius: 4px; }
+  .receipt-file-name { font-size: 11.5px; color: var(--grey); overflow-wrap: anywhere; }
+
+  body.capturing-for-pdf .btn-ghost,
+  body.capturing-for-pdf .btn-link,
+  body.capturing-for-pdf .text-link,
+  body.capturing-for-pdf .day-bar button,
+  body.capturing-for-pdf .pending-actions { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="brand-mark">
+      <img src="data:image/png;base64,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" alt="Blindmaster" class="brand-logo">
+      <div class="brand-sub">The Complete Outdoor Room</div>
+    </div>
+    <div class="doc-title">
+      <h1>Daily Installation Report</h1>
+      <div class="ref">Complete at the end of each working day</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="draftBanner" class="draft-banner"></div>
+  <div id="draftStatus" class="draft-status">Your progress saves automatically on this device.</div>
+
+  <datalist id="staffList"></datalist>
+
+  <!-- 1. REPORT DETAILS -->
+  <div class="card">
+    <div class="section-label">
+      <div class="section-num">1</div>
+      <div class="section-title">Report Details</div>
+    </div>
+    <div class="grid">
+      <div class="field">
+        <label for="installerName">Your Name <span class="req">*</span></label>
+        <select id="installerName" onchange="handleInstallerChange(); onDayChanged();"></select>
+        <input type="text" id="installerNameOther" placeholder="Type your name" style="display:none; margin-top:8px;" oninput="updateSignedBy()">
+      </div>
+      <div class="field">
+        <label for="reportDate">Date <span class="req">*</span></label>
+        <input type="date" id="reportDate" onchange="onDayChanged()">
+      </div>
+      <div class="field full" style="margin-bottom:0;">
+        <label>Worked With Today</label>
+        <div id="crewList"></div>
+        <button type="button" class="add-btn" onclick="addCrewRow(); scheduleDraftSave();"><span class="plus">+</span> Add Installer</button>
+        <div class="hint">Other installers who were with you for some or all of the day.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. HOURS -->
+  <div class="card">
+    <div class="section-label">
+      <div class="section-num">2</div>
+      <div class="section-title">Hours Worked</div>
+    </div>
+    <div class="grid">
+      <div class="field">
+        <label for="startTime">Day Start <span class="req">*</span></label>
+        <select id="startTime" onchange="updateDayHours()"></select>
+        <div class="hint">Leaving the depot or home for the first job.</div>
+      </div>
+      <div class="field">
+        <label for="finishTime">Day Finish <span class="req">*</span></label>
+        <select id="finishTime" onchange="updateDayHours()"></select>
+        <div class="hint">Back at the depot or home after the last job.</div>
+      </div>
+      <div class="field">
+        <label for="breakMins">Unpaid Break</label>
+        <select id="breakMins" onchange="updateDayHours()">
+          <option value="0">No break</option>
+          <option value="15">15 minutes</option>
+          <option value="30" selected>30 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="90">1.5 hours</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="totalHours">Total Hours Worked</label>
+        <input type="text" id="totalHours" class="calc-output" readonly placeholder="Auto-calculated">
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. JOBS -->
+  <div class="card">
+    <div class="section-label">
+      <div class="section-num">3</div>
+      <div class="section-title">Jobs Attended Today</div>
+    </div>
+
+    <div class="day-bar">
+      <span id="dayStatus">Choose your name and the date to load your appointments.</span>
+      <button type="button" class="btn-ghost" id="loadDayBtn" onclick="loadDay()">Reload appointments</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat"><div class="k">Jobs</div><div class="v" id="statJobs">0</div></div>
+      <div class="stat"><div class="k">Completed</div><div class="v" id="statCompleted">0</div></div>
+      <div class="stat warn"><div class="k">Return needed</div><div class="v" id="statReturn">0</div></div>
+      <div class="stat warn"><div class="k">Job Reports to do</div><div class="v" id="statPending">0</div></div>
+    </div>
+
+    <div id="calendarJobList"></div>
+    <div id="jobList"></div>
+    <button type="button" class="add-btn" onclick="addJob(); scheduleDraftSave();"><span class="plus">+</span> Add a Job Not in the Calendar</button>
+  </div>
+
+  <!-- 4. ROUTE -->
+  <div class="card">
+    <div class="section-label">
+      <div class="section-num">4</div>
+      <div class="section-title">Driving Route</div>
+    </div>
+    <input type="hidden" id="routeStart" value="warehouse">
+    <input type="hidden" id="routeEnd" value="warehouse">
+    <div class="route-points">
+      <div>
+        <label id="routeStartLabel">Day Started From</label>
+        <div class="seg" role="group" aria-labelledby="routeStartLabel" data-target="routeStart">
+          <button type="button" data-value="warehouse">Warehouse</button>
+          <button type="button" data-value="home">Home</button>
+        </div>
+      </div>
+      <div>
+        <label id="routeEndLabel">Day Finished At</label>
+        <div class="seg" role="group" aria-labelledby="routeEndLabel" data-target="routeEnd">
+          <button type="button" data-value="warehouse">Warehouse</button>
+          <button type="button" data-value="home">Home</button>
+        </div>
+      </div>
+    </div>
+    <div class="seg-hint" style="margin:-10px 0 16px;">Warehouse is 4/10 Orchard Road, Brookvale. Home isn't mapped — the route starts or ends at your first or last job instead.</div>
+    <div class="stats-row" id="routeStats" style="display:none;">
+      <div class="stat"><div class="k">Distance</div><div class="v" id="routeKm">—</div></div>
+      <div class="stat"><div class="k">Driving time</div><div class="v" id="routeTime">—</div></div>
+      <div class="stat"><div class="k">Stops</div><div class="v" id="routeStops">—</div></div>
+      <div class="stat"><div class="k">Actual (odometer)</div><div class="v" id="routeOdo">—</div></div>
+    </div>
+    <div id="routeContent"><p class="muted">Your driving route appears here once your appointments load.</p></div>
+  </div>
+
+  <!-- 5. MATERIALS -->
+  <div class="card">
+    <div class="section-label">
+      <div class="section-num">5</div>
+      <div class="section-title">Materials &amp; Stock</div>
+    </div>
+    <div class="field">
+      <label for="materialsUsed">Materials Used From Van Stock</label>
+      <textarea id="materialsUsed" data-dictate placeholder="e.g. 2 x motor brackets, 6 x wall plugs, 1 roll of trim"></textarea>
+    </div>
+    <div class="field">
+      <label for="stockIssues">Damaged, Faulty or Incorrect Items</label>
+      <textarea id="stockIssues" data-dictate placeholder="Anything that arrived damaged, was the wrong size/colour, or failed during install"></textarea>
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="restockNeeded">Needed Before Next Job / Restock</label>
+      <textarea id="restockNeeded" data-dictate placeholder="Parts or tools you're running low on"></textarea>
+    </div>
+  </div>
+
+  <!-- 6. VEHICLE -->
+  <div class="card">
+    <div class="section-label">
+      <div class="section-num">6</div>
+      <div class="section-title">Vehicle</div>
+    </div>
+    <div class="grid">
+      <div class="field">
+        <label for="vehicleRego">Vehicle / Rego</label>
+        <input type="text" id="vehicleRego" placeholder="e.g. Hilux – ABC12D">
+      </div>
+      <div class="field">
+        <label for="kmTravelled">Kilometres Travelled</label>
+        <input type="text" id="kmTravelled" class="calc-output" readonly placeholder="Auto-calculated">
+      </div>
+      <div class="field">
+        <label for="odoStart">Odometer Start</label>
+        <input type="number" id="odoStart" inputmode="numeric" min="0" oninput="updateKm()">
+      </div>
+      <div class="field">
+        <label for="odoEnd">Odometer Finish</label>
+        <input type="number" id="odoEnd" inputmode="numeric" min="0" oninput="updateKm()">
+      </div>
+      <div class="field full" style="margin-bottom:0;">
+        <label for="vehicleIssues">Vehicle Issues</label>
+        <textarea id="vehicleIssues" placeholder="Warning lights, damage, tyres, service due — leave blank if none" style="min-height:70px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. WORK RECEIPTS -->
+  <div class="card">
+    <div class="section-label">
+      <div class="section-num">7</div>
+      <div class="section-title">Work Receipts</div>
+    </div>
+    <div class="media-tab-note">Add one entry per receipt — fuel, parking, tolls, hardware. If it was bought for a particular job, enter the project number so it's filed with that job too.</div>
+    <div id="receiptList"></div>
+    <button type="button" class="add-btn" onclick="addReceipt(); scheduleDraftSave();"><span class="plus">+</span> Add Receipt</button>
+    <div class="hint" id="receiptTotal" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- 8. NOTES + SIGN-OFF -->
+  <div class="card">
+    <div class="section-label">
+      <div class="section-num">8</div>
+      <div class="section-title">Notes &amp; Sign-Off</div>
+    </div>
+    <div class="field">
+      <label for="officeNotes">Notes for the Office</label>
+      <textarea id="officeNotes" data-dictate placeholder="Client feedback, scheduling problems, anything the office needs to action tomorrow"></textarea>
+    </div>
+
+    <div class="signed-by">Signed by: <span id="signedBy">—</span></div>
+    <div class="grid">
+      <div class="field">
+        <label for="signoffDate">Date Signed</label>
+        <input type="date" id="signoffDate">
+      </div>
+    </div>
+    <div class="field">
+      <label>Signature</label>
+      <div class="sig-pad-wrap">
+        <canvas id="sigPad" class="sig-pad" width="800" height="180"></canvas>
+        <div class="sig-pad-placeholder" id="sigPlaceholder">Sign here with your finger or mouse</div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:6px;">
+        <button type="button" class="clear-sig-btn" onclick="clearSignature()">Clear Signature</button>
+      </div>
+    </div>
+    <div class="check-list">
+      <label class="check-item"><input type="checkbox" id="chkDeclare"> I confirm this report is a true and accurate record of my day <span class="req">*</span></label>
+    </div>
+  </div>
+
+</div>
+
+<div id="statusBanner" class="status-banner"><div class="inner" id="statusBannerInner"></div></div>
+
+<div class="submit-row">
+  <button type="button" class="btn-secondary" onclick="printReport()">Print / Save as PDF</button>
+  <button type="button" id="submitBtn" class="btn-primary" onclick="submitReport()">Submit Daily Report</button>
+</div>
+
+<div class="footer-note">
+  Blindmaster Pty Ltd &nbsp;&middot;&nbsp; Daily Installation Report &nbsp;&middot;&nbsp; Internal Use
+</div>
+
+<div id="reminderModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="reminderTitle" hidden>
+  <div class="modal-box">
+    <h2 id="reminderTitle">Job Reports still to do</h2>
+    <p id="reminderText"></p>
+    <div id="reminderList"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-primary" id="reminderOk" onclick="closeReminder()">OK</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  // ================= CONFIG =================
+  // Web App URL of the Daily Report Apps Script (ends in /exec).
+  const SUBMIT_ENDPOINT = 'PASTE_DAILY_REPORT_WEB_APP_URL_HERE'; // ← paste your /exec URL here (same one as before)
+
+  const STAFF_NAMES = ['Simon Lightfoot', 'Andrew', 'Troy Breglec', 'Lewis Hillard', 'Mark Johnson', 'Owen Nolan'];
+
+  const JOB_OUTCOMES = [
+    'Completed',
+    'Partially completed – return visit required',
+    'Not started – site or access issue',
+    'Not started – weather',
+    'Measure / check / service call only',
+    'Other'
+  ];
+  const RETURN_OUTCOMES = JOB_OUTCOMES.slice(1, 4);
+  const OUTCOMES_NEEDING_DETAIL = RETURN_OUTCOMES.concat(['Other']);
+
+  const DRAFT_PREFIX = 'blindmaster-daily-report:';
+  const SIMPLE_FIELDS = ['installerName', 'installerNameOther', 'reportDate', 'startTime', 'finishTime', 'breakMins',
+    'materialsUsed', 'stockIssues', 'restockNeeded', 'vehicleRego', 'odoStart', 'odoEnd', 'vehicleIssues',
+    'officeNotes', 'signoffDate', 'routeStart', 'routeEnd'];
+  const CHECK_FIELDS = ['chkDeclare'];
+
+  // ================= HELPERS =================
+  function $(id) { return document.getElementById(id); }
+
+  function localDateString(d) {
+    d = d || new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function buildTimeOptionsHTML() {
+    let html = '<option value="">Select time</option>';
+    for (let h = 5; h <= 20; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        if (h === 20 && m > 0) break;
+        const v = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+        html += '<option value="' + v + '">' + v + '</option>';
+      }
+    }
+    return html;
+  }
+
+  function toMinutes(v) {
+    if (!v) return null;
+    const parts = v.split(':').map(Number);
+    return parts[0] * 60 + parts[1];
+  }
+
+  function diffMinutes(a, b) {
+    const s = toMinutes(a), f = toMinutes(b);
+    if (s === null || f === null) return null;
+    return f - s;
+  }
+
+  function formatDuration(mins) {
+    if (mins === null || isNaN(mins)) return '';
+    if (mins < 0) return 'Check times';
+    const h = Math.floor(mins / 60), m = mins % 60;
+    let out = '';
+    if (h) out += h + (h === 1 ? ' hour' : ' hours');
+    if (m) out += (out ? ' ' : '') + m + (m === 1 ? ' minute' : ' minutes');
+    return out || '0 minutes';
+  }
+
+  function formatShort(mins) {
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return h ? (m ? h + 'h ' + m + 'm' : h + 'h') : m + 'm';
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function endpointReady() { return SUBMIT_ENDPOINT.indexOf('https://') === 0; }
+
+  function nowHHMM() {
+    const t = new Date();
+    return String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+  }
+
+  // ================= INSTALLER =================
+  function populateInstallerOptions() {
+    $('installerName').innerHTML = '<option value="">Select your name</option>' +
+      STAFF_NAMES.map(n => '<option value="' + escapeHtml(n) + '">' + escapeHtml(n) + '</option>').join('') +
+      '<option value="__other__">Other (type name)</option>';
+    $('staffList').innerHTML = STAFF_NAMES.map(n => '<option value="' + escapeHtml(n) + '">').join('');
+  }
+
+  function handleInstallerChange() {
+    $('installerNameOther').style.display = $('installerName').value === '__other__' ? 'block' : 'none';
+    updateSignedBy();
+  }
+
+  function getInstallerName() {
+    const v = $('installerName').value;
+    return v === '__other__' ? $('installerNameOther').value.trim() : v.trim();
+  }
+
+  function setInstallerName(name) {
+    if (!name) return;
+    if (STAFF_NAMES.includes(name)) {
+      $('installerName').value = name;
+    } else {
+      $('installerName').value = '__other__';
+      $('installerNameOther').value = name;
+    }
+    handleInstallerChange();
+  }
+
+  function updateSignedBy() { $('signedBy').textContent = getInstallerName() || '—'; }
+
+  // ================= CREW =================
+  function addCrewRow(name) {
+    const row = document.createElement('div');
+    row.className = 'crew-row';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Installer name';
+    input.setAttribute('list', 'staffList');
+    input.value = name || '';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'icon-btn remove';
+    btn.setAttribute('aria-label', 'Remove installer');
+    btn.innerHTML = '&times;';
+    btn.addEventListener('click', () => { row.remove(); scheduleDraftSave(); });
+    row.appendChild(input);
+    row.appendChild(btn);
+    $('crewList').appendChild(row);
+  }
+
+  function getCrewNames() {
+    return Array.from(document.querySelectorAll('#crewList input')).map(i => i.value.trim()).filter(Boolean);
+  }
+
+  // ================= HOURS / VEHICLE =================
+  function getWorkedMinutes() {
+    const d = diffMinutes($('startTime').value, $('finishTime').value);
+    if (d === null) return null;
+    if (d < 0) return -1;
+    return Math.max(0, d - Number($('breakMins').value || 0));
+  }
+
+  function updateDayHours() { $('totalHours').value = formatDuration(getWorkedMinutes()); }
+
+  function updateKm() {
+    const s = parseFloat($('odoStart').value), e = parseFloat($('odoEnd').value);
+    if (isNaN(s) || isNaN(e)) {
+      $('kmTravelled').value = '';
+    } else {
+      $('kmTravelled').value = e >= s ? Math.round(e - s) + ' km' : 'Check odometer';
+    }
+    $('routeOdo').textContent = $('kmTravelled').value || '—';
+  }
+
+  // ================= CALENDAR JOBS (from the Apps Script) =================
+  let calendarJobs = [];      // appointments from the calendar, with Job Report status
+  let calendarFlags = {};     // eventId -> { skipped, reason } for jobs that didn't go ahead
+  let daySnapshot = null;     // last successful load, kept in the draft for offline use
+  let lastRoute = null;
+  let routeError = '';
+  let dayLoading = false;
+
+  function setDayStatus(text) { $('dayStatus').textContent = text; }
+
+  async function loadDay(opts) {
+    opts = opts || {};
+    const installer = getInstallerName();
+    const date = $('reportDate').value;
+    if (!installer || !date) { setDayStatus('Choose your name and the date to load your appointments.'); return; }
+    if (!endpointReady()) { setDayStatus("This page isn't connected to the calendar yet — add your jobs by hand."); ensureSomeJob(); return; }
+    if (dayLoading) return;
+
+    dayLoading = true;
+    $('loadDayBtn').disabled = true;
+    setDayStatus('Loading your appointments…');
+    try {
+      const url = SUBMIT_ENDPOINT + '?action=day&installer=' + encodeURIComponent(installer) +
+        '&date=' + encodeURIComponent(date) +
+        '&start=' + encodeURIComponent($('routeStart').value) + '&end=' + encodeURIComponent($('routeEnd').value) +
+        '&_=' + Date.now();
+      const res = await fetch(url, { cache: 'no-store' });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Unknown error');
+
+      calendarJobs = data.jobs || [];
+      lastRoute = data.route || null;
+      routeError = data.routeError || '';
+      daySnapshot = { installer: installer, date: date, jobs: calendarJobs, route: lastRoute, routeError: routeError, loadedAt: new Date().toISOString() };
+
+      renderCalendarJobs();
+      renderRoute();
+      ensureSomeJob();
+      setDayStatus(calendarJobs.length
+        ? calendarJobs.length + (calendarJobs.length === 1 ? ' appointment' : ' appointments') + ' loaded from your calendar at ' + nowHHMM() + '.'
+        : 'No confirmed appointments in your calendar for this day. Add the jobs you did below.');
+      if (!opts.quiet) showReminderIfNeeded();
+      scheduleDraftSave();
+    } catch (err) {
+      setDayStatus("Couldn't load your appointments (" + describeError(err) + ')' +
+        (daySnapshot ? ' — showing what was last loaded.' : ' — add your jobs by hand, or try again.'));
+      ensureSomeJob();
+    } finally {
+      dayLoading = false;
+      $('loadDayBtn').disabled = false;
+    }
+  }
+
+  function onDayChanged() {
+    // A different person or day means a different set of appointments
+    if (daySnapshot && (daySnapshot.installer !== getInstallerName() || daySnapshot.date !== $('reportDate').value)) {
+      calendarJobs = [];
+      lastRoute = null;
+      routeError = '';
+      daySnapshot = null;
+      calendarFlags = {};
+      renderCalendarJobs();
+      renderRoute();
+    }
+    loadDay();
+  }
+
+  function ensureSomeJob() {
+    if (!calendarJobs.length && !document.querySelector('#jobList .job-card')) addJob();
+  }
+
+  function isPending(job) {
+    return !(job.djr && job.djr.submitted) && !(calendarFlags[job.eventId] && calendarFlags[job.eventId].skipped);
+  }
+
+  function renderCalendarJobs() {
+    const list = $('calendarJobList');
+    list.innerHTML = '';
+    calendarJobs.forEach((job, i) => {
+      const flags = calendarFlags[job.eventId] || {};
+      const done = !!(job.djr && job.djr.submitted);
+      const card = document.createElement('div');
+      card.className = 'job-card cal-job';
+      card.dataset.eventId = job.eventId;
+
+      const appt = job.start ? job.start + (job.end ? '–' + job.end : '') : 'All day';
+      let html = '<div class="job-card-head"><div class="job-num">Job <span class="job-index"></span> — ' + escapeHtml(job.client) +
+        '</div><span class="badge"></span></div>';
+      html += '<dl class="facts">' +
+        '<dt>Appointment</dt><dd>' + escapeHtml(appt) + '</dd>' +
+        '<dt>Job Ref</dt><dd>' + escapeHtml(job.ref || '—') + '</dd>' +
+        '<dt>Address</dt><dd>' + escapeHtml(job.address || '—') + '</dd>';
+
+      if (done) {
+        const d = job.djr;
+        const mins = diffMinutes(d.arrive, d.depart);
+        html += '<dt>On site</dt><dd>' + escapeHtml((d.arrive || '?') + '–' + (d.depart || '?') + (mins !== null ? ' (' + formatDuration(mins) + ')' : '')) + '</dd>' +
+          '<dt>Outcome</dt><dd>' + escapeHtml(d.status || '—') + '</dd>' +
+          '<dt>Work done</dt><dd>' + escapeHtml(d.tasksDone || '—') + '</dd>' +
+          (d.outstanding ? '<dt>Outstanding</dt><dd>' + escapeHtml(d.outstanding) + '</dd>' : '') +
+          (d.incident === 'Yes' ? '<dt>Safety</dt><dd class="warn">&#9888; Incident reported in the Job Report</dd>' : '') +
+          '</dl>' +
+          '<p style="margin:-4px 0 14px;"><a class="text-link" href="' + escapeHtml(job.djrLink) + '" target="_blank" rel="noopener">View or update the Job Report</a></p>';
+      } else {
+        html += '</dl>' +
+          '<div class="pending-box"><strong>Job Report not submitted yet.</strong> Complete it first — this job\'s times, outcome and notes will then fill in here automatically.' +
+          '<div class="pending-actions"><a class="btn-link" href="' + escapeHtml(job.djrLink) + '" target="_blank" rel="noopener">Complete Job Report</a>' +
+          '<button type="button" class="btn-ghost check-again">I\'ve submitted it — check again</button></div></div>' +
+          '<label class="check-item"><input type="checkbox" class="skip-check"> This job didn\'t go ahead</label>' +
+          '<div class="field skip-panel" style="display:none;"><label for="skipReason-' + i + '">Why not? <span class="req">*</span></label>' +
+          '<textarea id="skipReason-' + i + '" class="skip-reason" placeholder="e.g. Client not home, rescheduled by the office, rain" style="min-height:60px;"></textarea></div>';
+      }
+      card.innerHTML = html;
+      list.appendChild(card);
+
+      if (!done) {
+        const check = card.querySelector('.skip-check');
+        const reason = card.querySelector('.skip-reason');
+        check.checked = !!flags.skipped;
+        reason.value = flags.reason || '';
+        const update = () => {
+          calendarFlags[job.eventId] = { skipped: check.checked, reason: reason.value.trim() };
+          styleCalendarCard(card, job);
+          updateJobSummary();
+        };
+        check.addEventListener('change', update);
+        reason.addEventListener('input', update);
+        card.querySelector('.check-again').addEventListener('click', () => loadDay());
+      }
+      styleCalendarCard(card, job);
+    });
+    renumberJobs();
+    updateJobSummary();
+  }
+
+  function styleCalendarCard(card, job) {
+    const done = !!(job.djr && job.djr.submitted);
+    const flags = calendarFlags[job.eventId] || {};
+    const badge = card.querySelector('.badge');
+    card.classList.remove('is-complete', 'needs-return', 'is-pending', 'is-skipped');
+    if (done) {
+      badge.className = 'badge ok';
+      badge.textContent = '✓ Job Report in';
+      if (job.djr.status === 'Completed') card.classList.add('is-complete');
+      else if (RETURN_OUTCOMES.includes(job.djr.status)) card.classList.add('needs-return');
+    } else if (flags.skipped) {
+      badge.className = 'badge skip';
+      badge.textContent = "Didn't go ahead";
+      card.classList.add('is-skipped');
+    } else {
+      badge.className = 'badge todo';
+      badge.textContent = 'Job Report to do';
+      card.classList.add('is-pending');
+    }
+    const panel = card.querySelector('.skip-panel');
+    if (panel) panel.style.display = flags.skipped ? 'block' : 'none';
+    const box = card.querySelector('.pending-box');
+    if (box) box.style.display = flags.skipped ? 'none' : 'block';
+  }
+
+  function calendarJobToData(job) {
+    const flags = calendarFlags[job.eventId] || {};
+    const d = job.djr || {};
+    const base = { source: 'calendar', eventId: job.eventId, client: job.client, ref: job.ref, address: job.address, appointment: job.start || '' };
+    if (d.submitted) {
+      const mins = diffMinutes(d.arrive, d.depart);
+      return Object.assign(base, {
+        arrive: d.arrive || '', depart: d.depart || '', duration: mins === null ? '' : formatDuration(mins),
+        status: d.status || '', reportSubmitted: 'Yes', notes: d.tasksDone || '', outstanding: d.outstanding || '',
+        incident: d.incident || ''
+      });
+    }
+    return Object.assign(base, {
+      arrive: '', depart: '', duration: '',
+      status: flags.skipped ? 'Did not go ahead' : '',
+      reportSubmitted: flags.skipped ? 'Not required' : 'No',
+      notes: '', outstanding: flags.skipped ? (flags.reason || '') : '',
+      skipped: !!flags.skipped
+    });
+  }
+
+  // ================= REMINDER POP-UP =================
+  let lastFocusBeforeModal = null;
+
+  function showReminderIfNeeded(force) {
+    const pending = calendarJobs.filter(isPending);
+    if (!pending.length) return false;
+    $('reminderText').textContent = pending.length === 1
+      ? "You still have 1 Job Report to complete. Your daily report can't be submitted until it's done."
+      : 'You still have ' + pending.length + " Job Reports to complete. Your daily report can't be submitted until they're done.";
+    $('reminderList').innerHTML = pending.map(j =>
+      '<div class="reminder-item"><span>' + escapeHtml(j.client) + (j.ref ? ' · #' + escapeHtml(j.ref) : '') + '</span>' +
+      '<a class="btn-link" href="' + escapeHtml(j.djrLink) + '" target="_blank" rel="noopener">Complete</a></div>'
+    ).join('');
+    lastFocusBeforeModal = document.activeElement;
+    $('reminderModal').hidden = false;
+    $('reminderOk').focus();
+    return true;
+  }
+
+  function closeReminder() {
+    $('reminderModal').hidden = true;
+    if (lastFocusBeforeModal && lastFocusBeforeModal.focus) lastFocusBeforeModal.focus();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('reminderModal').hidden) closeReminder();
+  });
+
+  // When the installer comes back from completing a Job Report in another tab,
+  // check again automatically.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && calendarJobs.some(isPending)) loadDay({ quiet: true });
+  });
+
+  // ================= ROUTE =================
+  const ROUTE_PREF_KEY = 'blindmaster-route-preference';
+
+  function syncRouteButtons() {
+    document.querySelectorAll('.seg').forEach(seg => {
+      const value = $(seg.dataset.target).value;
+      seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.value === value ? 'true' : 'false'));
+    });
+  }
+
+  function initRouteButtons() {
+    // Start from this installer's usual choice on this device
+    try {
+      const pref = JSON.parse(localStorage.getItem(ROUTE_PREF_KEY) || 'null');
+      if (pref) {
+        if (pref.start) $('routeStart').value = pref.start;
+        if (pref.end) $('routeEnd').value = pref.end;
+      }
+    } catch (e) {}
+    document.querySelectorAll('.seg button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = $(btn.closest('.seg').dataset.target);
+        if (input.value === btn.dataset.value) return;
+        input.value = btn.dataset.value;
+        syncRouteButtons();
+        try { localStorage.setItem(ROUTE_PREF_KEY, JSON.stringify({ start: $('routeStart').value, end: $('routeEnd').value })); } catch (e) {}
+        scheduleDraftSave();
+        loadDay({ quiet: true });
+      });
+    });
+    syncRouteButtons();
+  }
+
+  function renderRoute() {
+    const box = $('routeContent');
+    const stats = $('routeStats');
+    if (!lastRoute) {
+      stats.style.display = 'none';
+      box.innerHTML = '<p class="muted">' + escapeHtml(calendarJobs.length
+        ? (routeError || 'A route needs at least two appointments with addresses.')
+        : 'Your driving route appears here once your appointments load.') + '</p>';
+      return;
+    }
+    const r = lastRoute;
+    stats.style.display = 'grid';
+    $('routeKm').textContent = r.totalKm + ' km';
+    $('routeTime').textContent = formatShort(r.totalMinutes);
+    $('routeStops').textContent = calendarJobs.filter(j => j.address).length;
+    updateKm();
+
+    const pin = (label) => '<span class="pin' + (label === 'W' ? ' depot' : '') + '">' + escapeHtml(label) + '</span>';
+    let html = '<img class="route-map" src="' + r.mapImage + '" alt="Map of today\'s driving route through ' + calendarJobs.filter(j => j.address).length + ' appointments">';
+    html += '<div class="legs-wrap"><table class="legs"><thead><tr><th>From</th><th>To</th><th style="text-align:right;">Km</th><th style="text-align:right;">Drive</th></tr></thead><tbody>' +
+      r.legs.map(l => '<tr><td>' + pin(l.fromLabel) + escapeHtml(l.from) + '</td><td>' + pin(l.toLabel) + escapeHtml(l.to) +
+        '</td><td class="num">' + l.km + '</td><td class="num">' + formatShort(l.minutes) + '</td></tr>').join('') +
+      '</tbody></table></div>';
+    const startText = r.startsAtWarehouse ? 'Starts at the warehouse' : 'Starts at your first job';
+    const endText = r.endsAtWarehouse ? 'finishes at the warehouse' : 'finishes at your last job';
+    html += '<p class="muted">' + startText + ', ' + endText + ', with jobs in appointment order. This is the planned route from the calendar addresses — your odometer reading in section 6 is the actual distance.' +
+      (r.missingAddresses && r.missingAddresses.length ? ' Not on the map (no address in the appointment): ' + escapeHtml(r.missingAddresses.join(', ')) + '.' : '') +
+      '</p>';
+    html += '<p style="margin-top:10px;"><a class="text-link" href="' + escapeHtml(r.mapsLink) + '" target="_blank" rel="noopener">Open this route in Google Maps</a></p>';
+    box.innerHTML = html;
+  }
+
+  // ================= MANUAL JOBS (not in the calendar) =================
+  let jobCounter = 0;
+
+  function addJob(data) {
+    data = data || {};
+    jobCounter++;
+    const id = jobCounter;
+    const card = document.createElement('div');
+    card.className = 'job-card manual-job';
+    card.innerHTML = `
+      <div class="job-card-head">
+        <div class="job-num">Job <span class="job-index"></span></div>
+        <span style="display:flex; gap:8px; align-items:center;">
+          <span class="badge manual">Not in calendar</span>
+          <button type="button" class="icon-btn remove remove-job" aria-label="Remove job">&times;</button>
+        </span>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label>Client / Job Name <span class="req">*</span></label>
+          <input type="text" class="job-client" placeholder="e.g. Harrington">
+        </div>
+        <div class="field">
+          <label>Job Ref #</label>
+          <input type="text" class="job-ref" inputmode="numeric" placeholder="e.g. 28643">
+        </div>
+        <div class="field full">
+          <label>Site Address / Suburb</label>
+          <input type="text" class="job-address" placeholder="e.g. Mosman">
+        </div>
+        <div class="field">
+          <label>Arrived</label>
+          <select class="job-arrive"></select>
+        </div>
+        <div class="field">
+          <label>Left Site</label>
+          <select class="job-depart"></select>
+        </div>
+      </div>
+      <div class="job-duration-row">Time on site: <strong class="job-duration">—</strong></div>
+      <div class="grid">
+        <div class="field">
+          <label>Outcome <span class="req">*</span></label>
+          <select class="job-status"></select>
+        </div>
+        <div class="field">
+          <label>Job Report Submitted?</label>
+          <select class="job-report-done">
+            <option value="">Select</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No — still to do</option>
+            <option value="Not required">Not required</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="jobNotes-${id}">Work Done / Notes</label>
+        <textarea id="jobNotes-${id}" class="job-notes" placeholder="Brief summary of what was done" style="min-height:70px;"></textarea>
+      </div>
+      <div class="job-outstanding-panel" style="display:none;">
+        <div class="field">
+          <label for="jobOutstanding-${id}">What's Outstanding and Why <span class="req">*</span></label>
+          <textarea id="jobOutstanding-${id}" class="job-outstanding" placeholder="What still needs doing, what's needed to finish, and why it couldn't be finished today" style="min-height:70px;"></textarea>
+        </div>
+      </div>
+    `;
+    $('jobList').appendChild(card);
+
+    card.querySelector('.job-status').innerHTML = '<option value="">Select outcome</option>' +
+      JOB_OUTCOMES.map(o => '<option value="' + escapeHtml(o) + '">' + escapeHtml(o) + '</option>').join('');
+    card.querySelector('.job-arrive').innerHTML = buildTimeOptionsHTML();
+    card.querySelector('.job-depart').innerHTML = buildTimeOptionsHTML();
+
+    card.querySelector('.job-client').value = data.client || '';
+    card.querySelector('.job-ref').value = data.ref || '';
+    card.querySelector('.job-address').value = data.address || '';
+    card.querySelector('.job-arrive').value = data.arrive || '';
+    card.querySelector('.job-depart').value = data.depart || '';
+    card.querySelector('.job-status').value = data.status || '';
+    card.querySelector('.job-report-done').value = data.reportSubmitted || '';
+    card.querySelector('.job-notes').value = data.notes || '';
+    card.querySelector('.job-outstanding').value = data.outstanding || '';
+
+    card.querySelector('.remove-job').addEventListener('click', () => removeJob(card));
+    const refresh = () => { updateJobCard(card); updateJobSummary(); };
+    card.addEventListener('input', refresh);
+    card.addEventListener('change', refresh);
+    card.querySelectorAll('textarea').forEach(attachDictation);
+
+    updateJobCard(card);
+    renumberJobs();
+    updateJobSummary();
+    return card;
+  }
+
+  function removeJob(card) {
+    const hasContent = Array.from(card.querySelectorAll('input, select, textarea')).some(el => el.value);
+    if (hasContent && !confirm('Remove this job from the report?')) return;
+    if (activeDictationField && card.querySelector('#' + activeDictationField)) stopDictation();
+    card.remove();
+    renumberJobs();
+    updateJobSummary();
+    scheduleDraftSave();
+  }
+
+  function renumberJobs() {
+    document.querySelectorAll('#calendarJobList .job-card, #jobList .job-card').forEach((card, i) => {
+      card.querySelector('.job-index').textContent = i + 1;
+    });
+  }
+
+  function updateJobCard(card) {
+    const mins = diffMinutes(card.querySelector('.job-arrive').value, card.querySelector('.job-depart').value);
+    card.querySelector('.job-duration').textContent = mins === null ? '—' : formatDuration(mins);
+    const status = card.querySelector('.job-status').value;
+    card.querySelector('.job-outstanding-panel').style.display = OUTCOMES_NEEDING_DETAIL.includes(status) ? 'block' : 'none';
+    card.classList.toggle('is-complete', status === 'Completed');
+    card.classList.toggle('needs-return', RETURN_OUTCOMES.includes(status));
+  }
+
+  function getManualJobsData() {
+    return Array.from(document.querySelectorAll('#jobList .job-card')).map(card => {
+      const arrive = card.querySelector('.job-arrive').value;
+      const depart = card.querySelector('.job-depart').value;
+      const mins = diffMinutes(arrive, depart);
+      const status = card.querySelector('.job-status').value;
+      return {
+        source: 'manual',
+        client: card.querySelector('.job-client').value.trim(),
+        ref: card.querySelector('.job-ref').value.trim(),
+        address: card.querySelector('.job-address').value.trim(),
+        arrive: arrive,
+        depart: depart,
+        duration: mins === null ? '' : formatDuration(mins),
+        status: status,
+        reportSubmitted: card.querySelector('.job-report-done').value,
+        notes: card.querySelector('.job-notes').value.trim(),
+        outstanding: OUTCOMES_NEEDING_DETAIL.includes(status) ? card.querySelector('.job-outstanding').value.trim() : ''
+      };
+    });
+  }
+
+  function getJobsData() {
+    return calendarJobs.map(calendarJobToData).concat(getManualJobsData());
+  }
+
+  function getJobStats() {
+    const jobs = getJobsData();
+    let siteMinutes = 0;
+    jobs.forEach(j => {
+      const m = diffMinutes(j.arrive, j.depart);
+      if (m !== null && m > 0) siteMinutes += m;
+    });
+    return {
+      jobs: jobs,
+      count: jobs.length,
+      completed: jobs.filter(j => j.status === 'Completed').length,
+      returns: jobs.filter(j => RETURN_OUTCOMES.includes(j.status)).length,
+      pending: calendarJobs.filter(isPending).length,
+      siteMinutes: siteMinutes
+    };
+  }
+
+  function updateJobSummary() {
+    const s = getJobStats();
+    $('statJobs').textContent = s.count;
+    $('statCompleted').textContent = s.completed;
+    $('statReturn').textContent = s.returns;
+    $('statPending').textContent = s.pending;
+  }
+
+  // ================= WORK RECEIPTS =================
+  let receiptCounter = 0;
+  const receiptFiles = {}; // receipt id -> { name, mimeType, dataUrl }
+
+  function addReceipt(data) {
+    data = data || {};
+    receiptCounter++;
+    const id = receiptCounter;
+    const card = document.createElement('div');
+    card.className = 'receipt-card';
+    card.dataset.receiptId = id;
+    card.innerHTML = `
+      <div class="job-card-head">
+        <div class="job-num">Receipt <span class="receipt-index"></span></div>
+        <button type="button" class="icon-btn remove" aria-label="Remove receipt">&times;</button>
+      </div>
+      <div class="receipt-body">
+        <div class="receipt-photo">
+          <img class="receipt-thumb" alt="Receipt photo" hidden>
+          <div class="receipt-file-name"></div>
+          <label class="file-btn" for="receiptFile-${id}" tabindex="0">Add Photo</label>
+          <input type="file" id="receiptFile-${id}" accept="image/*,application/pdf">
+        </div>
+        <div>
+          <div class="grid">
+            <div class="field">
+              <label for="receiptAmount-${id}">Amount ($)</label>
+              <input type="number" id="receiptAmount-${id}" class="receipt-amount" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div class="field">
+              <label for="receiptProject-${id}">Project Number</label>
+              <input type="text" id="receiptProject-${id}" class="receipt-project" inputmode="numeric" placeholder="e.g. 28643">
+              <div class="hint">Only if it's for a particular job.</div>
+            </div>
+            <div class="field full">
+              <label for="receiptPurpose-${id}">What It Was For <span class="req">*</span></label>
+              <input type="text" id="receiptPurpose-${id}" class="receipt-purpose" placeholder="e.g. Fuel, parking in Mosman, extra brackets from Bunnings">
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    $('receiptList').appendChild(card);
+    card.querySelector('.receipt-amount').value = data.amount || '';
+    card.querySelector('.receipt-project').value = data.project || '';
+    card.querySelector('.receipt-purpose').value = data.purpose || '';
+    if (data.hadPhoto) {
+      card.querySelector('.receipt-file-name').textContent = 'Photo needs adding again before you submit.';
+    }
+
+    card.querySelector('.icon-btn.remove').addEventListener('click', () => {
+      const hasContent = receiptFiles[id] || Array.from(card.querySelectorAll('input[type=text], input[type=number]')).some(el => el.value);
+      if (hasContent && !confirm('Remove this receipt?')) return;
+      delete receiptFiles[id];
+      card.remove();
+      renumberReceipts();
+      scheduleDraftSave();
+    });
+    card.querySelector('input[type=file]').addEventListener('change', async function () {
+      const file = this.files && this.files[0];
+      this.value = '';
+      if (!file) return;
+      card.querySelector('.receipt-file-name').textContent = 'Preparing photo…';
+      const processed = await prepareReceiptFile(file);
+      if (!processed) {
+        card.querySelector('.receipt-file-name').textContent = "That file couldn't be read — try taking the photo again.";
+        return;
+      }
+      receiptFiles[id] = { name: file.name, mimeType: processed.mimeType, dataUrl: processed.dataUrl };
+      showReceiptPreview(card, receiptFiles[id]);
+      scheduleDraftSave();
+    });
+    card.addEventListener('input', updateReceiptTotal);
+    renumberReceipts();
+    return card;
+  }
+
+  function showReceiptPreview(card, file) {
+    const img = card.querySelector('.receipt-thumb');
+    const name = card.querySelector('.receipt-file-name');
+    if (file.mimeType.indexOf('image/') === 0) {
+      img.src = file.dataUrl;
+      img.hidden = false;
+      name.textContent = '';
+    } else {
+      img.hidden = true;
+      name.textContent = '📄 ' + file.name;
+    }
+    card.querySelector('.receipt-photo').classList.add('has-photo');
+    card.querySelector('.file-btn').textContent = 'Change Photo';
+  }
+
+  // Shrinks phone photos (often 3–5 MB) to a sharp, readable ~300 KB JPEG
+  // so submissions stay quick on mobile data. PDFs are kept as they are.
+  function prepareReceiptFile(file) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onerror = () => resolve(null);
+      reader.onload = () => {
+        const original = reader.result;
+        if (!file.type || file.type.indexOf('image/') !== 0) {
+          resolve({ dataUrl: original, mimeType: file.type || 'application/octet-stream' });
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          const max = 1600;
+          const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.naturalWidth * scale);
+          canvas.height = Math.round(img.naturalHeight * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          try {
+            resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.82), mimeType: 'image/jpeg' });
+          } catch (e) {
+            resolve({ dataUrl: original, mimeType: file.type });
+          }
+        };
+        img.onerror = () => resolve({ dataUrl: original, mimeType: file.type });
+        img.src = original;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renumberReceipts() {
+    document.querySelectorAll('#receiptList .receipt-card').forEach((card, i) => {
+      card.querySelector('.receipt-index').textContent = i + 1;
+    });
+    updateReceiptTotal();
+  }
+
+  function getReceiptsData() {
+    return Array.from(document.querySelectorAll('#receiptList .receipt-card')).map(card => {
+      const id = card.dataset.receiptId;
+      return {
+        id: id,
+        amount: card.querySelector('.receipt-amount').value.trim(),
+        purpose: card.querySelector('.receipt-purpose').value.trim(),
+        project: card.querySelector('.receipt-project').value.trim(),
+        hasPhoto: !!receiptFiles[id]
+      };
+    });
+  }
+
+  function isBlankReceipt(r) { return !r.hasPhoto && !r.amount && !r.purpose && !r.project; }
+
+  function updateReceiptTotal() {
+    const total = getReceiptsData().reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+    $('receiptTotal').textContent = total > 0 ? 'Total of receipts: $' + total.toFixed(2) : '';
+  }
+
+  // ================= VOICE DICTATION =================
+  let recognition = null;
+  let isRecording = false;
+  let dictationBaseText = '';
+  let activeDictationField = null;
+
+  function attachDictation(textarea) {
+    const id = textarea.id;
+    const label = textarea.parentElement.querySelector('label');
+    if (!id || !label || $('dictateBtn-' + id)) return;
+
+    const text = document.createElement('span');
+    while (label.firstChild) text.appendChild(label.firstChild);
+    label.appendChild(text);
+    label.classList.add('label-with-action');
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'dictate-btn';
+    btn.id = 'dictateBtn-' + id;
+    btn.innerHTML = '<span id="dictateIcon-' + id + '">&#127908;</span><span id="dictateLabel-' + id + '">Fill by Voice</span>';
+    btn.addEventListener('click', e => { e.preventDefault(); toggleDictation(id); });
+    label.appendChild(btn);
+
+    const hint = document.createElement('div');
+    hint.className = 'hint';
+    hint.id = 'dictateHint-' + id;
+    hint.style.display = 'none';
+    hint.innerHTML = '&#127908; Listening — speak now. Tap "Stop" when finished.';
+
+    const unsupported = document.createElement('div');
+    unsupported.className = 'hint';
+    unsupported.id = 'dictateUnsupported-' + id;
+    unsupported.style.display = 'none';
+    unsupported.textContent = "Voice input isn't supported in this browser. Try Chrome on Android or desktop.";
+
+    textarea.insertAdjacentElement('afterend', unsupported);
+    textarea.insertAdjacentElement('afterend', hint);
+  }
+
+  function toggleDictation(fieldId) {
+    if (isRecording) {
+      const same = activeDictationField === fieldId;
+      stopDictation();
+      if (same) return;
+    }
+    if (!recognition) {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = SR ? new SR() : null;
+    }
+    if (!recognition) {
+      $('dictateUnsupported-' + fieldId).style.display = 'block';
+      return;
+    }
+    activeDictationField = fieldId;
+    const textarea = $(fieldId);
+    dictationBaseText = textarea.value ? textarea.value.trim() + ' ' : '';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-AU';
+    recognition.onresult = event => {
+      let finalText = '', interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalText += t + ' ';
+        else interim += t;
+      }
+      if (finalText) dictationBaseText += finalText;
+      textarea.value = (dictationBaseText + interim).trim();
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    recognition.onerror = () => stopDictation();
+    recognition.onend = () => { if (isRecording) recognition.start(); };
+    recognition.start();
+    isRecording = true;
+    setDictateUI(fieldId, true);
+  }
+
+  function stopDictation() {
+    const fieldId = activeDictationField;
+    isRecording = false;
+    if (recognition) {
+      recognition.onend = null;
+      try { recognition.stop(); } catch (e) {}
+    }
+    if (fieldId) setDictateUI(fieldId, false);
+    activeDictationField = null;
+  }
+
+  function setDictateUI(fieldId, recording) {
+    const btn = $('dictateBtn-' + fieldId);
+    if (!btn) return;
+    btn.classList.toggle('recording', recording);
+    $('dictateIcon-' + fieldId).innerHTML = recording ? '&#9209;' : '&#127908;';
+    $('dictateLabel-' + fieldId).textContent = recording ? 'Stop' : 'Fill by Voice';
+    $('dictateHint-' + fieldId).style.display = recording ? 'block' : 'none';
+  }
+
+  // ================= AUTO-SAVED DRAFT =================
+  let draftSavingEnabled = false;
+  let draftTimer = null;
+  let currentDraftKey = null;
+
+  function collectState() {
+    const state = { savedAt: new Date().toISOString(), fields: {}, checks: {} };
+    SIMPLE_FIELDS.forEach(id => { state.fields[id] = $(id).value; });
+    CHECK_FIELDS.forEach(id => { state.checks[id] = $(id).checked; });
+    state.crew = getCrewNames();
+    state.manualJobs = getManualJobsData();
+    state.calendarFlags = calendarFlags;
+    state.daySnapshot = daySnapshot;
+    state.receipts = getReceiptsData().map(r => ({ amount: r.amount, purpose: r.purpose, project: r.project, hadPhoto: r.hasPhoto }));
+    return state;
+  }
+
+  function applyState(state) {
+    SIMPLE_FIELDS.forEach(id => {
+      if (state.fields && state.fields[id] !== undefined) $(id).value = state.fields[id];
+    });
+    CHECK_FIELDS.forEach(id => {
+      if (state.checks && state.checks[id] !== undefined) $(id).checked = !!state.checks[id];
+    });
+    handleInstallerChange();
+
+    $('crewList').innerHTML = '';
+    (state.crew && state.crew.length ? state.crew : ['']).forEach(n => addCrewRow(n));
+
+    $('jobList').innerHTML = '';
+    (state.manualJobs || []).forEach(j => addJob(j));
+
+    calendarFlags = state.calendarFlags || {};
+    daySnapshot = state.daySnapshot || null;
+    calendarJobs = daySnapshot ? (daySnapshot.jobs || []) : [];
+    lastRoute = daySnapshot ? daySnapshot.route : null;
+    routeError = daySnapshot ? (daySnapshot.routeError || '') : '';
+    renderCalendarJobs();
+    renderRoute();
+
+    $('receiptList').innerHTML = '';
+    (state.receipts || []).forEach(r => addReceipt(r));
+
+    refreshAllDerived();
+  }
+
+  function refreshAllDerived() {
+    updateDayHours();
+    updateKm();
+    updateSignedBy();
+    updateJobSummary();
+    updateReceiptTotal();
+    syncCheckStyles();
+    syncRouteButtons();
+  }
+
+  function syncCheckStyles() {
+    document.querySelectorAll('label.check-item').forEach(l => {
+      l.classList.toggle('checked', l.querySelector('input').checked);
+    });
+  }
+
+  function scheduleDraftSave() {
+    if (!draftSavingEnabled) return;
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(saveDraft, 400);
+  }
+
+  function saveDraft() {
+    try {
+      const state = collectState();
+      const key = DRAFT_PREFIX + (state.fields.reportDate || 'undated');
+      if (currentDraftKey && currentDraftKey !== key) localStorage.removeItem(currentDraftKey);
+      try {
+        localStorage.setItem(key, JSON.stringify(state));
+      } catch (quotaErr) {
+        // Storage full — drop the map image from the saved copy and try again
+        if (state.daySnapshot && state.daySnapshot.route) {
+          state.daySnapshot = Object.assign({}, state.daySnapshot, { route: null });
+          localStorage.setItem(key, JSON.stringify(state));
+        } else {
+          throw quotaErr;
+        }
+      }
+      currentDraftKey = key;
+      $('draftStatus').textContent = 'Draft saved on this device at ' + nowHHMM() + ' — receipt photos and signature are added when you submit.';
+    } catch (e) {
+      $('draftStatus').textContent = "This browser isn't saving drafts — submit before closing the page.";
+    }
+  }
+
+  function readDraft(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function removeDraft(key) {
+    try { if (key) localStorage.removeItem(key); } catch (e) {}
+  }
+
+  function listDraftKeys() {
+    const keys = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.indexOf(DRAFT_PREFIX) === 0) keys.push(k);
+      }
+    } catch (e) {}
+    return keys.sort();
+  }
+
+  function prettyDate(iso) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || 'an earlier day';
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  function showRestoredBanner(state) {
+    const b = $('draftBanner');
+    b.innerHTML = '&#128190; Picked up where you left off for ' + escapeHtml(prettyDate(state.fields.reportDate)) + '.' +
+      '<div class="draft-actions"><button type="button" id="startFreshBtn">Clear and start again</button></div>';
+    b.classList.add('show');
+    $('startFreshBtn').addEventListener('click', () => {
+      if (!confirm('Clear everything on this report and start again?')) return;
+      draftSavingEnabled = false;
+      removeDraft(currentDraftKey);
+      window.location.reload();
+    });
+  }
+
+  function showUnsubmittedBanner(key, state) {
+    const b = $('draftBanner');
+    b.innerHTML = '&#9888; You have an unsubmitted report from ' + escapeHtml(prettyDate(state.fields.reportDate)) + '.' +
+      '<div class="draft-actions"><button type="button" class="primary" id="openOldBtn">Open and finish it</button>' +
+      '<button type="button" id="discardOldBtn">Discard it</button></div>';
+    b.classList.add('show');
+    $('openOldBtn').addEventListener('click', () => {
+      draftSavingEnabled = false;
+      currentDraftKey = key;
+      applyState(state);
+      draftSavingEnabled = true;
+      showRestoredBanner(state);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      loadDay();
+    });
+    $('discardOldBtn').addEventListener('click', () => {
+      if (!confirm('Discard the unsubmitted report from ' + prettyDate(state.fields.reportDate) + '?')) return;
+      removeDraft(key);
+      b.classList.remove('show');
+    });
+  }
+
+  // ================= STATUS BANNER =================
+  function showBanner(type, message) {
+    $('statusBanner').className = 'status-banner ' + type;
+    $('statusBannerInner').textContent = message;
+    $('statusBanner').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function clearBanner() {
+    $('statusBanner').className = 'status-banner';
+    $('statusBannerInner').textContent = '';
+  }
+
+  function describeError(err) {
+    if (!err) return 'Unknown error';
+    if (typeof err === 'string') return err;
+    if (err.message) return err.message;
+    try { return JSON.stringify(err); } catch (e) { return String(err); }
+  }
+
+  // ================= PDF SNAPSHOT =================
+  async function generateReportPdfDataUrl() {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const originalScrollY = window.scrollY;
+    window.scrollTo(0, 0);
+
+    const clones = [];
+    document.querySelectorAll('textarea').forEach(textarea => {
+      if (textarea.offsetParent === null) return;
+      const clone = document.createElement('div');
+      clone.className = 'pdf-textarea-clone';
+      clone.textContent = textarea.value || '';
+      clone.style.width = textarea.offsetWidth + 'px';
+      clone.style.minHeight = textarea.offsetHeight + 'px';
+      textarea.insertAdjacentElement('afterend', clone);
+      clones.push(clone);
+    });
+
+    document.body.classList.add('capturing-for-pdf');
+    await new Promise(r => setTimeout(r, 100));
+
+    let canvas;
+    try {
+      canvas = await html2canvas(document.body, {
+        scale: 2, useCORS: true, backgroundColor: '#ffffff',
+        scrollX: 0, scrollY: -window.scrollY, windowWidth: 950
+      });
+    } finally {
+      document.body.classList.remove('capturing-for-pdf');
+      clones.forEach(c => c.remove());
+      window.scrollTo(0, originalScrollY);
+    }
+
+    const { jsPDF } = window.jspdf;
+    const pageW = 210, pageH = 297;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pxToMm = pageW / canvas.width;
+    const pageHpx = pageH / pxToMm;
+    let done = 0, first = true;
+    while (done < canvas.height) {
+      const slice = Math.min(pageHpx, canvas.height - done);
+      const pc = document.createElement('canvas');
+      pc.width = canvas.width;
+      pc.height = slice;
+      pc.getContext('2d').drawImage(canvas, 0, done, canvas.width, slice, 0, 0, canvas.width, slice);
+      if (!first) pdf.addPage();
+      pdf.addImage(pc.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, slice * pxToMm);
+      done += slice;
+      first = false;
+    }
+    return pdf.output('datauristring');
+  }
+
+  // ================= VALIDATION + SUBMIT =================
+  function validate() {
+    const missing = [];
+    if (!getInstallerName()) missing.push('Your Name');
+    if (!$('reportDate').value) missing.push('Date');
+    if (!$('startTime').value) missing.push('Day Start');
+    if (!$('finishTime').value) missing.push('Day Finish');
+    if (getWorkedMinutes() === -1) missing.push('Day Finish must be after Day Start');
+
+    const jobs = getJobsData();
+    if (jobs.length === 0) missing.push('At least one job');
+    jobs.forEach((j, i) => {
+      const n = 'Job ' + (i + 1) + (j.client ? ' (' + j.client + ')' : '');
+      if (j.source === 'calendar') {
+        const flags = calendarFlags[j.eventId] || {};
+        if (j.reportSubmitted === 'No') missing.push(n + ' — Job Report not submitted yet');
+        if (flags.skipped && !flags.reason) missing.push(n + " — why it didn't go ahead");
+        return;
+      }
+      if (!j.client) missing.push(n + ' — Client / Job Name');
+      if (!j.status) missing.push(n + ' — Outcome');
+      if (OUTCOMES_NEEDING_DETAIL.includes(j.status) && !j.outstanding) missing.push(n + " — What's Outstanding and Why");
+      const m = diffMinutes(j.arrive, j.depart);
+      if (m !== null && m < 0) missing.push(n + ' — Left Site must be after Arrived');
+    });
+
+    getReceiptsData().forEach((r, i) => {
+      if (isBlankReceipt(r)) return;
+      if (!r.hasPhoto) missing.push('Receipt ' + (i + 1) + ' — photo of the receipt');
+      if (!r.purpose) missing.push('Receipt ' + (i + 1) + ' — What It Was For');
+    });
+
+    const s = parseFloat($('odoStart').value), e = parseFloat($('odoEnd').value);
+    if (!isNaN(s) && !isNaN(e) && e < s) missing.push('Odometer Finish must be higher than Odometer Start');
+    if (!$('chkDeclare').checked) missing.push('Confirmation that the report is accurate');
+    return missing;
+  }
+
+  async function submitReport() {
+    clearBanner();
+    if (isRecording) stopDictation();
+
+    const missing = validate();
+    if (missing.length) {
+      showBanner('error', 'Please complete the following before submitting:\n\n' + missing.map(m => '• ' + m).join('\n'));
+      showReminderIfNeeded();
+      return;
+    }
+    if (!endpointReady()) {
+      showBanner('error', 'This page isn\'t connected to Google Drive yet (SUBMIT_ENDPOINT hasn\'t been set). Use "Print / Save as PDF" and send the report to the office.');
+      return;
+    }
+
+    const submitBtn = $('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+    showBanner('success', 'Preparing your daily report and submitting — this can take a few seconds, longer with receipts attached. Keep this page open.');
+
+    try {
+      const stats = getJobStats();
+      const worked = getWorkedMinutes();
+      const receipts = getReceiptsData().filter(r => !isBlankReceipt(r));
+      const receiptsTotal = receipts.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+
+      const fd = new FormData();
+      fd.append('installer', getInstallerName());
+      fd.append('reportDate', $('reportDate').value);
+      fd.append('crew', getCrewNames().join(', '));
+      fd.append('startTime', $('startTime').value);
+      fd.append('finishTime', $('finishTime').value);
+      fd.append('breakMins', $('breakMins').value);
+      fd.append('totalHours', $('totalHours').value);
+      fd.append('totalMinutes', worked === null ? '' : String(worked));
+      fd.append('jobCount', String(stats.count));
+      fd.append('jobsCompleted', String(stats.completed));
+      fd.append('jobsReturn', String(stats.returns));
+      fd.append('siteTime', formatDuration(stats.siteMinutes));
+      fd.append('jobsJson', JSON.stringify(stats.jobs));
+      if (lastRoute) {
+        fd.append('routeKm', String(lastRoute.totalKm));
+        fd.append('routeDriveTime', formatDuration(lastRoute.totalMinutes));
+        fd.append('routeLegsJson', JSON.stringify(lastRoute.legs));
+      }
+      fd.append('routeStart', $('routeStart').value);
+      fd.append('routeEnd', $('routeEnd').value);
+      ['materialsUsed', 'stockIssues', 'restockNeeded', 'vehicleRego', 'odoStart', 'odoEnd', 'kmTravelled',
+        'vehicleIssues', 'officeNotes', 'signoffDate'].forEach(id => fd.append(id, $(id).value.trim()));
+      fd.append('chkDeclare', $('chkDeclare').checked ? 'Yes' : 'No');
+      fd.append('hasSignature', hasSignature ? 'Yes' : 'No');
+      fd.append('receiptsSummaryJson', JSON.stringify(receipts.map(r => ({ amount: r.amount, purpose: r.purpose, project: r.project }))));
+      fd.append('receiptsTotal', receiptsTotal ? receiptsTotal.toFixed(2) : '');
+      fd.append('receiptsJson', JSON.stringify(receipts.map(r => {
+        const f = receiptFiles[r.id];
+        return { amount: r.amount, purpose: r.purpose, project: r.project, name: f ? f.name : '', mimeType: f ? f.mimeType : '', dataUrl: f ? f.dataUrl : '' };
+      })));
+
+      try {
+        fd.append('renderedPdfDataUrl', await generateReportPdfDataUrl());
+      } catch (pdfErr) {
+        throw new Error('Failed while generating the report PDF: ' + describeError(pdfErr) + '. Try again, or use "Print / Save as PDF" and send it to the office.');
+      }
+
+      let response;
+      try {
+        response = await fetch(SUBMIT_ENDPOINT, { method: 'POST', body: fd });
+      } catch (netErr) {
+        throw new Error('Could not reach the submission server: ' + describeError(netErr) + '. Your report is still saved on this device — check your connection and try again.');
+      }
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseErr) {
+        throw new Error('The submission server sent back an unexpected response (HTTP ' + response.status + '). Your report is still saved on this device — try again shortly.');
+      }
+
+      if (result.success) {
+        removeDraft(currentDraftKey);
+        draftSavingEnabled = false;
+        $('draftStatus').textContent = 'Submitted — draft cleared from this device.';
+        $('draftBanner').classList.remove('show');
+        let msg = 'Daily report submitted.';
+        if (result.folderName) msg += '\n\nSaved to: Daily Reports / ' + result.folderName;
+        if (result.receiptsSaved) msg += '\n' + result.receiptsSaved + (result.receiptsSaved === 1 ? ' receipt' : ' receipts') + ' saved.';
+        if (result.copiedTo && result.copiedTo.length) msg += '\nAlso filed in: ' + result.copiedTo.join(', ');
+        if (result.warning) msg += '\n\n' + result.warning;
+        showBanner('success', msg);
+        submitBtn.textContent = 'Submitted ✓';
+      } else {
+        showBanner('error', 'Submission failed: ' + (result.error || 'Unknown error') + '\n\nYour report is still saved on this device. Try again, or use "Print / Save as PDF".');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Daily Report';
+      }
+    } catch (err) {
+      showBanner('error', describeError(err));
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Daily Report';
+    }
+  }
+
+  function printReport() {
+    try { window.print(); }
+    catch (e) { showBanner('error', "This browser blocked printing. Open the report in Chrome or Safari and use the browser's own Print option."); }
+  }
+
+  // ================= SIGNATURE PAD =================
+  let sigCtx = null;
+  let isDrawing = false;
+  let hasSignature = false;
+
+  function initSignaturePad() {
+    const canvas = $('sigPad');
+    const placeholder = $('sigPlaceholder');
+    sigCtx = canvas.getContext('2d');
+
+    function sizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const w = Math.round(rect.width * ratio), h = Math.round(rect.height * ratio);
+      if (canvas.width === w && canvas.height === h) return;
+      canvas.width = w;
+      canvas.height = h;
+      sigCtx.scale(ratio, ratio);
+      sigCtx.strokeStyle = '#0B1E3D';
+      sigCtx.lineWidth = 2.2;
+      sigCtx.lineCap = 'round';
+      sigCtx.lineJoin = 'round';
+    }
+    sizeCanvas();
+    if (window.ResizeObserver) new ResizeObserver(sizeCanvas).observe(canvas);
+    else { window.addEventListener('resize', sizeCanvas); setTimeout(sizeCanvas, 300); }
+
+    function pos(evt) {
+      const r = canvas.getBoundingClientRect();
+      const p = evt.touches && evt.touches.length ? evt.touches[0] : evt;
+      return { x: p.clientX - r.left, y: p.clientY - r.top };
+    }
+    function start(evt) {
+      evt.preventDefault();
+      isDrawing = true;
+      hasSignature = true;
+      placeholder.style.display = 'none';
+      const p = pos(evt);
+      sigCtx.beginPath();
+      sigCtx.moveTo(p.x, p.y);
+    }
+    function move(evt) {
+      if (!isDrawing) return;
+      evt.preventDefault();
+      const p = pos(evt);
+      sigCtx.lineTo(p.x, p.y);
+      sigCtx.stroke();
+    }
+    function end() { isDrawing = false; }
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    canvas.addEventListener('mouseup', end);
+    canvas.addEventListener('mouseleave', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+  }
+
+  function clearSignature() {
+    const canvas = $('sigPad');
+    if (sigCtx) sigCtx.clearRect(0, 0, canvas.width, canvas.height);
+    hasSignature = false;
+    $('sigPlaceholder').style.display = 'block';
+  }
+
+  // ================= INIT =================
+  window.addEventListener('DOMContentLoaded', () => {
+    populateInstallerOptions();
+    $('startTime').innerHTML = buildTimeOptionsHTML();
+    $('finishTime').innerHTML = buildTimeOptionsHTML();
+
+    const today = localDateString();
+    const params = new URLSearchParams(window.location.search);
+    $('reportDate').value = params.get('date') || today;
+    $('signoffDate').value = today;
+    if (params.get('installer')) setInstallerName(params.get('installer'));
+
+    document.querySelectorAll('textarea[data-dictate]').forEach(attachDictation);
+    initSignaturePad();
+    initRouteButtons();
+
+    const targetKey = DRAFT_PREFIX + $('reportDate').value;
+    const draft = readDraft(targetKey);
+    if (draft) {
+      currentDraftKey = targetKey;
+      applyState(draft);
+      if (params.get('installer')) setInstallerName(params.get('installer'));
+      showRestoredBanner(draft);
+    } else {
+      addCrewRow();
+      const olderKey = listDraftKeys().find(k => k !== targetKey);
+      const olderDraft = olderKey ? readDraft(olderKey) : null;
+      if (olderDraft) showUnsubmittedBanner(olderKey, olderDraft);
+    }
+    refreshAllDerived();
+    renderRoute();
+
+    const container = document.querySelector('.container');
+    container.addEventListener('input', scheduleDraftSave);
+    container.addEventListener('change', () => { syncCheckStyles(); scheduleDraftSave(); });
+    draftSavingEnabled = true;
+
+    if (getInstallerName() && $('reportDate').value && endpointReady()) {
+      loadDay();
+    } else {
+      ensureSomeJob();
+      if (!endpointReady()) setDayStatus("This page isn't connected to the calendar yet — add your jobs by hand.");
+    }
+  });
+
+</script>
+
+</body>
+</html>

@@ -636,6 +636,29 @@
   body.capturing-for-pdf .pdf-textarea-clone { display: block; }
   body.capturing-for-pdf .container { margin-top: 0; }
 
+  /* Safety & site checks */
+  .check-list { display: flex; flex-direction: column; gap: 10px; }
+  label.check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--grey-line);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: 0;
+    margin: 0;
+    background: var(--white);
+  }
+  label.check-item input { width: 20px; height: 20px; margin: 0; flex-shrink: 0; accent-color: var(--green); }
+  label.check-item.checked { border-color: var(--green); background: var(--green-pale); }
+  #incidentPanel { display: none; }
+  #incidentPanel.show { display: block; }
+
   /* Auto-saved draft (saving as you go) */
   .draft-status {
     font-size: 11.5px;
@@ -904,10 +927,43 @@
     </div>
   </div>
 
-  <!-- SIGN OFF -->
+  <!-- SAFETY -->
   <div class="card">
     <div class="section-label">
       <div class="section-num">7</div>
+      <div class="section-title">Safety &amp; Site Checks</div>
+    </div>
+    <div class="field">
+      <label for="incident">Any incident, injury, near miss or property damage on this job? <span class="req">*</span></label>
+      <select id="incident" onchange="updateIncidentPanel()">
+        <option value="">Select</option>
+        <option value="No">No</option>
+        <option value="Yes">Yes</option>
+      </select>
+    </div>
+    <div id="incidentPanel" class="field">
+      <label style="display:flex; align-items:center; justify-content:space-between;">
+        <span>What Happened <span class="req">*</span></span>
+        <button type="button" id="dictateBtn-incidentDetails" class="dictate-btn" onclick="toggleDictation('incidentDetails')">
+          <span id="dictateIcon-incidentDetails">&#127908;</span>
+          <span id="dictateLabel-incidentDetails">Fill by Voice</span>
+        </button>
+      </label>
+      <textarea id="incidentDetails" placeholder="Where, when, who was involved, any injury or damage, and what was done about it. The office will follow up with you."></textarea>
+      <div class="hint" id="dictateHint-incidentDetails" style="display:none;">&#127908; Listening — speak now. Click "Stop" when finished.</div>
+      <div class="hint" id="dictateUnsupported-incidentDetails" style="display:none;">Voice input isn't supported in this browser. Try Chrome on desktop or Android.</div>
+    </div>
+    <div class="check-list">
+      <label class="check-item"><input type="checkbox" id="chkPPE"> Correct PPE worn</label>
+      <label class="check-item"><input type="checkbox" id="chkTools"> Ladders, power tools and leads checked before use</label>
+      <label class="check-item"><input type="checkbox" id="chkSite"> Site left clean, safe and secure</label>
+    </div>
+  </div>
+
+  <!-- SIGN OFF -->
+  <div class="card">
+    <div class="section-label">
+      <div class="section-num">8</div>
       <div class="section-title">Installer Sign-Off</div>
     </div>
     <div class="grid">
@@ -1330,6 +1386,21 @@
     document.getElementById('totalTime').value = calculateDurationLabel(startVal, finishVal);
   }
 
+  const SAFETY_CHECKS = ['chkPPE', 'chkTools', 'chkSite'];
+
+  function updateIncidentPanel() {
+    document.getElementById('incidentPanel').classList.toggle('show', document.getElementById('incident').value === 'Yes');
+  }
+
+  function syncCheckStyles() {
+    document.querySelectorAll('label.check-item').forEach(l => {
+      l.classList.toggle('checked', l.querySelector('input').checked);
+    });
+  }
+  document.addEventListener('change', e => {
+    if (e.target && e.target.type === 'checkbox') syncCheckStyles();
+  });
+
   function setStatus(status) {
     const completeEl = document.getElementById('statusComplete');
     const incompleteEl = document.getElementById('statusIncomplete');
@@ -1608,6 +1679,12 @@
       }
       if (data.signoffDate) document.getElementById('signoffDate').value = data.signoffDate;
 
+      if (data.incident) document.getElementById('incident').value = data.incident;
+      if (data.incidentDetails) document.getElementById('incidentDetails').value = data.incidentDetails;
+      SAFETY_CHECKS.forEach(id => { if (data[id]) document.getElementById(id).checked = data[id] === 'Yes'; });
+      updateIncidentPanel();
+      syncCheckStyles();
+
       return true;
     } catch (err) {
       return false;
@@ -1811,6 +1888,11 @@
       }
     });
 
+    if (!document.getElementById('incident').value) missing.push('Safety — incident question');
+    if (document.getElementById('incident').value === 'Yes' && !document.getElementById('incidentDetails').value.trim()) {
+      missing.push('Safety — What Happened');
+    }
+
     if (isSignaturePadEmpty() && !getSignoffName()) {
       missing.push('Signature (draw a signature, or type your name above as confirmation)');
     }
@@ -1876,6 +1958,9 @@
       formData.append('menRequired', document.getElementById('menRequired').value.trim());
       formData.append('signoffName', getSignoffName());
       formData.append('signoffDate', document.getElementById('signoffDate').value);
+      formData.append('incident', document.getElementById('incident').value);
+      formData.append('incidentDetails', document.getElementById('incidentDetails').value.trim());
+      SAFETY_CHECKS.forEach(id => formData.append(id, document.getElementById(id).checked ? 'Yes' : 'No'));
 
       let mediaPayload;
       try {
@@ -1942,7 +2027,8 @@
   const JOB_DRAFT_PREFIX = 'blindmaster-job-report:';
   const DRAFT_MAX_AGE_DAYS = 30;
   const DRAFT_FIELDS = ['clientName', 'jobRef', 'siteAddress', 'jobDate', 'projectManager', 'calEventId', 'calId',
-    'startTime', 'finishTime', 'tasksDone', 'remainingWork', 'timeRequired', 'menRequired', 'signoffDate'];
+    'startTime', 'finishTime', 'tasksDone', 'remainingWork', 'timeRequired', 'menRequired', 'signoffDate',
+    'incident', 'incidentDetails'];
 
   let draftSavingEnabled = false;
   let draftSaveTimer = null;
@@ -1962,6 +2048,8 @@
       : document.getElementById('statusIncomplete').classList.contains('active') ? 'incomplete' : '';
     draft.individualTimes = JSON.parse(JSON.stringify(individualTimesData));
     draft.signoffName = getSignoffName();
+    draft.checks = {};
+    SAFETY_CHECKS.forEach(id => { draft.checks[id] = document.getElementById(id).checked; });
     return draft;
   }
 
@@ -1982,6 +2070,9 @@
 
     updateTotalTime();
     if (draft.status) setStatus(draft.status);
+    SAFETY_CHECKS.forEach(id => { if (draft.checks && draft.checks[id] !== undefined) document.getElementById(id).checked = !!draft.checks[id]; });
+    updateIncidentPanel();
+    syncCheckStyles();
 
     if (draft.signoffName) {
       updateSignoffNameOptions();

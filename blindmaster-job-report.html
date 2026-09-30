@@ -635,6 +635,44 @@
   }
   body.capturing-for-pdf .pdf-textarea-clone { display: block; }
   body.capturing-for-pdf .container { margin-top: 0; }
+
+  /* Auto-saved draft (saving as you go) */
+  .draft-status {
+    font-size: 11.5px;
+    color: var(--grey);
+    font-weight: 600;
+    text-align: right;
+    margin: 0 2px 12px;
+    min-height: 16px;
+  }
+  .draft-banner {
+    display: none;
+    background: var(--gold-pale);
+    border: 1px solid var(--gold-dark);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 12.5px;
+    color: var(--navy);
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  .draft-banner.show { display: block; }
+  .draft-banner button {
+    margin-top: 10px;
+    background: var(--white);
+    color: var(--navy);
+    border: 1.5px solid var(--gold-dark);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  body.capturing-for-pdf .draft-banner,
+  body.capturing-for-pdf .draft-status,
+  body.capturing-for-pdf #prefillBanner { display: none !important; }
 </style>
 </head>
 <body>
@@ -653,6 +691,9 @@
 </div>
 
 <div class="container">
+
+  <div id="draftBanner" class="draft-banner"></div>
+  <div id="draftStatus" class="draft-status">Your progress saves automatically on this device.</div>
 
   <div id="prefillBanner" style="display:none; background:var(--gold-pale); border:1px solid var(--gold-dark); border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:12.5px; color:var(--navy); font-weight:600;">
     &#128198; Job details loaded from calendar appointment. Please check they're correct before submitting.
@@ -713,7 +754,7 @@
 
     <label>Installer Names</label>
     <div id="crewList"></div>
-    <button type="button" class="add-btn" onclick="addCrewRow()"><span class="plus">+</span> Add Installer</button>
+    <button type="button" class="add-btn" onclick="addCrewRow(); scheduleDraftSave();"><span class="plus">+</span> Add Installer</button>
   </div>
 
   <!-- TIME -->
@@ -932,6 +973,7 @@
   function removeCrewRow(id) {
     const row = document.getElementById('crewRow-' + id);
     if (row) row.remove();
+    scheduleDraftSave();
     updateCrewCount();
     updateSignoffNameOptions();
     updateIndividualTimesPanel();
@@ -1304,6 +1346,7 @@
       panel.classList.add('show');
       reqSpans.forEach(el => el.style.display = 'inline');
     }
+    scheduleDraftSave();
   }
 
   // Web App URL that receives submitted reports and saves them to Drive + email
@@ -1345,7 +1388,8 @@
 
   // default date fields to today, then apply any calendar prefill from the URL
   window.addEventListener('DOMContentLoaded', () => {
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     document.getElementById('jobDate').value = today;
     document.getElementById('signoffDate').value = today;
     populateTimeOptions('startTime');
@@ -1358,10 +1402,11 @@
     // unexpected error there can never prevent it from working.
     initSignaturePad();
 
+    cleanUpOldDrafts();
     applyPrefillFromUrl().catch(err => {
       // Prefill/draft-restore is best-effort — the report is still fully
       // usable blank if this fails for any reason.
-    });
+    }).then(enableDraftSaving);
   });
 
   function buildTimeOptionsHTML() {
@@ -1460,6 +1505,17 @@
     const calIdParam = params.get('calId');
     if (calIdParam) {
       document.getElementById('calId').value = decodeURIComponent(calIdParam);
+    }
+
+    // Unsubmitted work saved on this device is newer than anything in
+    // Drive, so it takes priority over the last submitted version.
+    const draftKey = jobDraftKey();
+    const localDraft = readJobDraft(draftKey);
+    if (localDraft) {
+      applyJobDraft(localDraft);
+      currentDraftKey = draftKey;
+      showDraftRestoredBanner(localDraft);
+      return;
     }
 
     if (didPrefill) {
@@ -1852,6 +1908,10 @@
       }
 
       if (result.success) {
+        removeJobDraft(currentDraftKey);
+        draftSavingEnabled = false;
+        document.getElementById('draftStatus').textContent = 'Submitted — draft cleared from this device.';
+        document.getElementById('draftBanner').classList.remove('show');
         const folderNote = result.folderUrl ? '\n\nSaved to: ' + result.folderName : '';
         const warningNote = result.warning ? '\n\n' + result.warning : '';
         showBanner('success', 'Report submitted successfully.' + folderNote + warningNote);
@@ -1874,6 +1934,138 @@
     } catch (e) {
       showBanner('error', 'This device/browser blocked printing directly. Try opening this report in your device\'s main browser (Chrome/Safari) rather than an in-app viewer, then use the browser\'s own Print option.');
     }
+  }
+
+  // ---- Save as you go (auto-saved draft on this device) ----
+  // Each job gets its own draft, keyed by job ref (or calendar event if
+  // there's no ref yet), so an installer can have several jobs part-done.
+  const JOB_DRAFT_PREFIX = 'blindmaster-job-report:';
+  const DRAFT_MAX_AGE_DAYS = 30;
+  const DRAFT_FIELDS = ['clientName', 'jobRef', 'siteAddress', 'jobDate', 'projectManager', 'calEventId', 'calId',
+    'startTime', 'finishTime', 'tasksDone', 'remainingWork', 'timeRequired', 'menRequired', 'signoffDate'];
+
+  let draftSavingEnabled = false;
+  let draftSaveTimer = null;
+  let currentDraftKey = null;
+
+  function jobDraftKey() {
+    const ref = document.getElementById('jobRef').value.trim();
+    const eventId = document.getElementById('calEventId').value.trim();
+    return JOB_DRAFT_PREFIX + (ref ? 'ref-' + ref : eventId ? 'event-' + eventId : 'unlinked');
+  }
+
+  function collectJobDraft() {
+    const draft = { savedAt: new Date().toISOString(), fields: {} };
+    DRAFT_FIELDS.forEach(id => { draft.fields[id] = document.getElementById(id).value; });
+    draft.crew = Array.from(document.querySelectorAll('#crewList input')).map(i => i.value.trim()).filter(Boolean);
+    draft.status = document.getElementById('statusComplete').classList.contains('active') ? 'complete'
+      : document.getElementById('statusIncomplete').classList.contains('active') ? 'incomplete' : '';
+    draft.individualTimes = JSON.parse(JSON.stringify(individualTimesData));
+    draft.signoffName = getSignoffName();
+    return draft;
+  }
+
+  function applyJobDraft(draft) {
+    const wasEnabled = draftSavingEnabled;
+    draftSavingEnabled = false;
+
+    DRAFT_FIELDS.forEach(id => {
+      if (draft.fields && draft.fields[id] !== undefined) document.getElementById(id).value = draft.fields[id];
+    });
+
+    Object.keys(individualTimesData).forEach(k => delete individualTimesData[k]);
+    Object.assign(individualTimesData, draft.individualTimes || {});
+
+    document.getElementById('crewList').innerHTML = '';
+    const crew = draft.crew && draft.crew.length ? draft.crew : ['', ''];
+    crew.forEach(name => addCrewRow(name));
+
+    updateTotalTime();
+    if (draft.status) setStatus(draft.status);
+
+    if (draft.signoffName) {
+      updateSignoffNameOptions();
+      const select = document.getElementById('signoffName');
+      if (Array.from(select.options).some(o => o.value === draft.signoffName)) {
+        select.value = draft.signoffName;
+      } else {
+        select.value = '__other__';
+        document.getElementById('signoffNameOther').style.display = 'block';
+        document.getElementById('signoffNameOther').value = draft.signoffName;
+      }
+    }
+
+    draftSavingEnabled = wasEnabled;
+  }
+
+  function scheduleDraftSave() {
+    if (!draftSavingEnabled) return;
+    clearTimeout(draftSaveTimer);
+    draftSaveTimer = setTimeout(saveJobDraft, 400);
+  }
+
+  function saveJobDraft() {
+    try {
+      const key = jobDraftKey();
+      if (currentDraftKey && currentDraftKey !== key) localStorage.removeItem(currentDraftKey);
+      localStorage.setItem(key, JSON.stringify(collectJobDraft()));
+      currentDraftKey = key;
+      const t = new Date();
+      document.getElementById('draftStatus').textContent = 'Draft saved on this device at ' +
+        String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0') +
+        ' — photos and signature are added when you submit.';
+    } catch (e) {
+      document.getElementById('draftStatus').textContent = "This browser isn't saving drafts — submit before closing the page.";
+    }
+  }
+
+  function readJobDraft(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function removeJobDraft(key) {
+    try { if (key) localStorage.removeItem(key); } catch (e) {}
+  }
+
+  function cleanUpOldDrafts() {
+    try {
+      const cutoff = Date.now() - DRAFT_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+      const stale = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || k.indexOf(JOB_DRAFT_PREFIX) !== 0) continue;
+        const d = readJobDraft(k);
+        if (!d || !d.savedAt || new Date(d.savedAt).getTime() < cutoff) stale.push(k);
+      }
+      stale.forEach(k => localStorage.removeItem(k));
+    } catch (e) {}
+  }
+
+  function showDraftRestoredBanner(draft) {
+    const saved = draft.savedAt ? new Date(draft.savedAt) : null;
+    const when = saved ? saved.toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : 'earlier';
+    const banner = document.getElementById('draftBanner');
+    banner.innerHTML = '&#128190; Picked up where you left off (last saved ' + when + '). ' +
+      'Add any photos and your signature again before submitting.<br>' +
+      '<button type="button" id="discardDraftBtn">Discard my changes and reload</button>';
+    banner.classList.add('show');
+    document.getElementById('prefillBanner').style.display = 'none';
+    document.getElementById('discardDraftBtn').addEventListener('click', () => {
+      if (!confirm('Discard what you have entered on this device and reload the report?')) return;
+      draftSavingEnabled = false;
+      removeJobDraft(currentDraftKey);
+      window.location.reload();
+    });
+  }
+
+  function enableDraftSaving() {
+    const container = document.querySelector('.container');
+    container.addEventListener('input', scheduleDraftSave);
+    container.addEventListener('change', scheduleDraftSave);
+    draftSavingEnabled = true;
   }
 
   // ---- Signature pad ----

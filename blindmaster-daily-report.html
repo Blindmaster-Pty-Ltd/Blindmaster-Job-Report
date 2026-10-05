@@ -1141,7 +1141,8 @@
     <div class="grid">
       <div class="field">
         <label for="vehicleRego">Vehicle / Rego</label>
-        <input type="text" id="vehicleRego" placeholder="e.g. Hilux – ABC12D">
+        <input type="text" id="vehicleRego" placeholder="e.g. Toyota Hiace – ABC12D">
+        <div class="hint" id="vehicleHint">Filled in from your name — change it if you're in a different vehicle today.</div>
       </div>
       <div class="field">
         <label for="kmTravelled">Kilometres Travelled</label>
@@ -1190,16 +1191,6 @@
       <div class="field">
         <label for="signoffDate">Date Signed</label>
         <input type="date" id="signoffDate">
-      </div>
-    </div>
-    <div class="field">
-      <label>Signature</label>
-      <div class="sig-pad-wrap">
-        <canvas id="sigPad" class="sig-pad" width="800" height="180"></canvas>
-        <div class="sig-pad-placeholder" id="sigPlaceholder">Sign here with your finger or mouse</div>
-      </div>
-      <div style="display:flex; justify-content:flex-end; margin-top:6px;">
-        <button type="button" class="clear-sig-btn" onclick="clearSignature()">Clear Signature</button>
       </div>
     </div>
     <div class="check-list">
@@ -1324,7 +1315,35 @@
     $('staffList').innerHTML = STAFF_NAMES.map(n => '<option value="' + escapeHtml(n) + '">').join('');
   }
 
+  // Each installer's usual vehicle — filled into Vehicle / Rego from the
+  // installer's name. Matched on first name, so "Andrew" and "Andrew
+  // Armstrong" both work. Installers can still change it on the day.
+  const INSTALLER_VEHICLES = {
+    'Mark': 'Ford Ranger',
+    'Lewis': 'Toyota Hiace',
+    'Simon': 'Volvo XC60',
+    'Troy': 'Toyota Troopy',
+    'Andrew': 'Toyota' // TODO: add the model
+  };
+
+  function vehicleFor(name) {
+    const first = String(name || '').trim().split(/\s+/)[0].toLowerCase();
+    const key = Object.keys(INSTALLER_VEHICLES).find(k => k.toLowerCase() === first);
+    return key ? INSTALLER_VEHICLES[key] : '';
+  }
+
+  // Fills the vehicle in when it's empty, or when it was filled in
+  // automatically for a different installer. Never overwrites something typed.
+  function fillVehicleFromInstaller() {
+    const input = $('vehicleRego');
+    if (input.value.trim() && input.dataset.autofilled !== 'yes') return;
+    const vehicle = vehicleFor(getInstallerName());
+    input.value = vehicle;
+    input.dataset.autofilled = vehicle ? 'yes' : 'no';
+  }
+
   function handleInstallerChange() {
+    fillVehicleFromInstaller();
     $('installerNameOther').style.display = $('installerName').value === '__other__' ? 'block' : 'none';
     updateSignedBy();
   }
@@ -2276,7 +2295,7 @@
         }
       }
       currentDraftKey = key;
-      $('draftStatus').textContent = 'Draft saved on this device at ' + nowHHMM() + ' — receipt photos and signature are added when you submit.';
+      $('draftStatus').textContent = 'Draft saved on this device at ' + nowHHMM() + ' — receipt photos are added when you submit.';
     } catch (e) {
       $('draftStatus').textContent = "This browser isn't saving drafts — submit before closing the page.";
     }
@@ -2509,7 +2528,6 @@
       ['materialsUsed', 'stockIssues', 'restockNeeded', 'vehicleRego', 'odoStart', 'odoEnd', 'kmTravelled',
         'vehicleIssues', 'officeNotes', 'signoffDate'].forEach(id => fd.append(id, $(id).value.trim()));
       fd.append('chkDeclare', $('chkDeclare').checked ? 'Yes' : 'No');
-      fd.append('hasSignature', hasSignature ? 'Yes' : 'No');
       const totals = receiptTotals(receipts);
       fd.append('receiptsSummaryJson', JSON.stringify(receipts.map(r => ({ amount: r.amount, purpose: r.purpose, project: r.project, paidWith: r.paidWith }))));
       fd.append('receiptsTotal', receiptsTotal ? receiptsTotal.toFixed(2) : '');
@@ -2568,73 +2586,6 @@
     catch (e) { showBanner('error', "This browser blocked printing. Open the report in Chrome or Safari and use the browser's own Print option."); }
   }
 
-  // ================= SIGNATURE PAD =================
-  let sigCtx = null;
-  let isDrawing = false;
-  let hasSignature = false;
-
-  function initSignaturePad() {
-    const canvas = $('sigPad');
-    const placeholder = $('sigPlaceholder');
-    sigCtx = canvas.getContext('2d');
-
-    function sizeCanvas() {
-      const ratio = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-      const w = Math.round(rect.width * ratio), h = Math.round(rect.height * ratio);
-      if (canvas.width === w && canvas.height === h) return;
-      canvas.width = w;
-      canvas.height = h;
-      sigCtx.scale(ratio, ratio);
-      sigCtx.strokeStyle = '#0B1E3D';
-      sigCtx.lineWidth = 2.2;
-      sigCtx.lineCap = 'round';
-      sigCtx.lineJoin = 'round';
-    }
-    sizeCanvas();
-    if (window.ResizeObserver) new ResizeObserver(sizeCanvas).observe(canvas);
-    else { window.addEventListener('resize', sizeCanvas); setTimeout(sizeCanvas, 300); }
-
-    function pos(evt) {
-      const r = canvas.getBoundingClientRect();
-      const p = evt.touches && evt.touches.length ? evt.touches[0] : evt;
-      return { x: p.clientX - r.left, y: p.clientY - r.top };
-    }
-    function start(evt) {
-      evt.preventDefault();
-      isDrawing = true;
-      hasSignature = true;
-      placeholder.style.display = 'none';
-      const p = pos(evt);
-      sigCtx.beginPath();
-      sigCtx.moveTo(p.x, p.y);
-    }
-    function move(evt) {
-      if (!isDrawing) return;
-      evt.preventDefault();
-      const p = pos(evt);
-      sigCtx.lineTo(p.x, p.y);
-      sigCtx.stroke();
-    }
-    function end() { isDrawing = false; }
-
-    canvas.addEventListener('mousedown', start);
-    canvas.addEventListener('mousemove', move);
-    canvas.addEventListener('mouseup', end);
-    canvas.addEventListener('mouseleave', end);
-    canvas.addEventListener('touchstart', start, { passive: false });
-    canvas.addEventListener('touchmove', move, { passive: false });
-    canvas.addEventListener('touchend', end);
-  }
-
-  function clearSignature() {
-    const canvas = $('sigPad');
-    if (sigCtx) sigCtx.clearRect(0, 0, canvas.width, canvas.height);
-    hasSignature = false;
-    $('sigPlaceholder').style.display = 'block';
-  }
-
   // ================= INIT =================
   window.addEventListener('DOMContentLoaded', () => {
     populateInstallerOptions();
@@ -2650,7 +2601,6 @@
     if (params.get('installer')) setInstallerName(params.get('installer'));
 
     document.querySelectorAll('textarea[data-dictate]').forEach(attachDictation);
-    initSignaturePad();
     initRouteButtons();
 
     const targetKey = DRAFT_PREFIX + $('reportDate').value;
@@ -2670,6 +2620,7 @@
 
     const container = document.querySelector('.container');
     container.addEventListener('input', scheduleDraftSave);
+    $('vehicleRego').addEventListener('input', function () { this.dataset.autofilled = 'no'; });
     container.addEventListener('change', () => { syncCheckStyles(); scheduleDraftSave(); });
     draftSavingEnabled = true;
 

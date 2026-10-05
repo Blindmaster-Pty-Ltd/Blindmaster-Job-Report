@@ -692,6 +692,25 @@
   .cg-locked-note { display: none; margin: -4px 0 14px; padding: 10px 12px; border-radius: 6px; background: var(--amber-pale); color: var(--amber); font-size: 12.5px; font-weight: 700; }
   .cg-locked-note.show { display: block; }
 
+  /* Start / Finish */
+  .clock-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 10px; }
+  .clock-box { background: var(--navy-pale); padding: 16px; text-align: center; }
+  .clock-box.done { background: var(--gold-pale); }
+  .clock-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--navy); }
+  .clock-time { font-size: 34px; font-weight: 700; color: var(--navy); margin: 6px 0 12px; font-variant-numeric: tabular-nums; }
+  .clock-btn {
+    width: 100%; min-height: 54px; border: none; cursor: pointer; font-family: inherit;
+    font-size: 17px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+    background: var(--navy); color: #FFFFFF;
+  }
+  .clock-btn:disabled { opacity: 0.35; cursor: default; }
+  .clock-box.done .clock-btn { display: none; }
+  .clock-undo {
+    margin-top: 6px; background: none; border: none; color: var(--grey); font-family: inherit;
+    font-size: 12px; font-weight: 600; text-decoration: underline; cursor: pointer;
+  }
+  body.capturing-for-pdf .clock-btn, body.capturing-for-pdf .clock-undo, body.capturing-for-pdf #clockHint { display: none !important; }
+
   /* Auto-saved draft (saving as you go) */
   .draft-status {
     font-size: 11.5px;
@@ -909,23 +928,65 @@
       <div class="section-num">3</div>
       <div class="section-title">Time on Site</div>
     </div>
-    <div class="grid">
-      <div class="field">
-        <label>Start Time <span class="req">*</span></label>
-        <select id="startTime" onchange="handleStartTimeChange()">
-          <option value="" disabled selected>Select time</option>
-        </select>
+    <input type="hidden" id="startTime">
+    <input type="hidden" id="finishTime">
+
+    <div id="clockPanel">
+      <div class="clock-row">
+        <div class="clock-box" id="startBox">
+          <div class="clock-label">Arrived on site</div>
+          <div class="clock-time" id="startDisplay">--:--</div>
+          <button type="button" class="clock-btn" id="startBtn" onclick="clockStart()">Start</button>
+          <button type="button" class="clock-undo" id="startUndo" onclick="undoClock('start')" style="display:none;">Undo start</button>
+        </div>
+        <div class="clock-box" id="finishBox">
+          <div class="clock-label">Left site</div>
+          <div class="clock-time" id="finishDisplay">--:--</div>
+          <button type="button" class="clock-btn" id="finishBtn" onclick="clockFinish()" disabled>Finish</button>
+          <button type="button" class="clock-undo" id="finishUndo" onclick="undoClock('finish')" style="display:none;">Undo finish</button>
+        </div>
       </div>
-      <div class="field">
-        <label>Finish Time <span class="req">*</span></label>
-        <select id="finishTime" onchange="updateTotalTime()">
-          <option value="" disabled selected>Select time</option>
-        </select>
+      <div class="hint" id="clockHint">Tap <strong>Start</strong> when you arrive on site and <strong>Finish</strong> when you leave. Complete and submit this report as you leave, with the customer's sign-off.</div>
+    </div>
+
+    <div id="manualTimesPanel" style="display:none;">
+      <div class="cg-locked-note show" id="manualNote" style="margin:0 0 14px;"></div>
+      <div class="grid">
+        <div class="field">
+          <label for="manualStart">Start Time <span class="req">*</span></label>
+          <input type="time" id="manualStart" onchange="syncTimes()" oninput="syncTimes()">
+        </div>
+        <div class="field">
+          <label for="manualFinish">Finish Time <span class="req">*</span></label>
+          <input type="time" id="manualFinish" onchange="syncTimes()" oninput="syncTimes()">
+        </div>
       </div>
     </div>
-    <div class="field" style="max-width: 260px; margin-bottom: 0;">
-      <label>Total Time on Site</label>
-      <input type="text" id="totalTime" readonly placeholder="Auto-calculated" style="background: var(--navy-pale); font-weight: 700; color: var(--navy); cursor: default;">
+
+    <div class="check-list" style="margin-top:12px;">
+      <label class="check-item"><input type="checkbox" id="forgotTap" onchange="updateCustomerSignoff()"> I forgot to tap Start / Finish — enter the times by hand</label>
+    </div>
+
+    <div class="grid" style="margin-top:16px;">
+      <div class="field" style="margin-bottom:0;">
+        <label for="breakMins">Break</label>
+        <select id="breakMins" onchange="syncTimes()">
+          <option value="0">No break</option>
+          <option value="10">10 minutes</option>
+          <option value="15">15 minutes</option>
+          <option value="20">20 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="90">1.5 hours</option>
+        </select>
+        <div class="hint">Time taken for a break while on this job.</div>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label for="totalTime">Total Time on Site</label>
+        <input type="text" id="totalTime" readonly placeholder="Auto-calculated" style="background: var(--navy-pale); font-weight: 700; color: var(--navy); cursor: default;">
+        <div class="hint">Start to finish, minus the break.</div>
+      </div>
     </div>
 
     <div id="individual-times-panel" style="display:none; margin-top:20px; padding-top:20px; border-top:1px dashed var(--grey-line);">
@@ -1264,6 +1325,8 @@
         </div>
       </div>
     </div>
+
+    <div class="cg-locked-note" id="afterLeavingNote" style="display:none; margin:0;">Times were entered by hand after leaving site (section 3), so no customer sign-off is needed. The office will be told the customer didn't sign.</div>
 
     <div class="check-list" style="margin-top:16px;">
       <label class="check-item absent-item"><input type="checkbox" id="clientAbsent" onchange="updateCustomerSignoff()"> <span><strong>The client was not on site</strong> to sign off. No control gear has been left on site.</span></label>
@@ -1661,10 +1724,126 @@
     return display;
   }
 
+  // ---- Start / Finish (replaces the old start/finish dropdowns) ----
+  // Normally the times come from the Start and Finish buttons. If the client
+  // wasn't on site (ticked in Sign-Off), the installer types them instead.
+  let clockData = { start: null, finish: null }; // { time:'HH:MM', at: ISO, lat, lng, acc }
+
+  function nowHHMM() {
+    const d = new Date();
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  function isClientAbsent() {
+    const el = document.getElementById('clientAbsent');
+    return !!(el && el.checked);
+  }
+  function isForgotTap() {
+    const el = document.getElementById('forgotTap');
+    return !!(el && el.checked);
+  }
+  // Times are typed in when the client wasn't on site, or the installer
+  // forgot to tap Start / Finish (e.g. doing the report in the car).
+  function isManualTimes() { return isClientAbsent() || isForgotTap(); }
+
+  function captureClockLocation(which) {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(pos => {
+      if (!clockData[which]) return;
+      clockData[which].lat = pos.coords.latitude;
+      clockData[which].lng = pos.coords.longitude;
+      clockData[which].acc = Math.round(pos.coords.accuracy);
+      scheduleDraftSave();
+    }, () => {}, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+  }
+
+  function clockStart() {
+    clockData.start = { time: nowHHMM(), at: new Date().toISOString() };
+    clockData.finish = null;
+    captureClockLocation('start');
+    syncTimes();
+    scheduleDraftSave();
+  }
+
+  function clockFinish() {
+    if (!clockData.start) return;
+    clockData.finish = { time: nowHHMM(), at: new Date().toISOString() };
+    captureClockLocation('finish');
+    syncTimes();
+    scheduleDraftSave();
+  }
+
+  function undoClock(which) {
+    if (!confirm(which === 'start' ? 'Undo your start time? You\'ll need to tap Start again.' : 'Undo your finish time?')) return;
+    if (which === 'start') { clockData.start = null; clockData.finish = null; }
+    else clockData.finish = null;
+    syncTimes();
+    scheduleDraftSave();
+  }
+
+  // Shows the right panel and copies the chosen times into the report.
+  function syncTimes() {
+    const el = id => document.getElementById(id);
+    const manual = isManualTimes();
+    const switchingToManual = manual && el('manualTimesPanel').style.display !== 'block';
+    el('clockPanel').style.display = manual ? 'none' : 'block';
+    el('manualNote').textContent = isClientAbsent()
+      ? 'The client was not on site (see Sign-Off), so enter your start and finish times by hand.'
+      : 'Enter the times you arrived on site and left. As this report is being done after leaving site, the customer sign-off isn\'t needed.';
+    el('manualTimesPanel').style.display = manual ? 'block' : 'none';
+
+    if (manual) {
+      // On switching to manual, carry over any button times already recorded
+      if (switchingToManual) {
+        if (!el('manualStart').value && clockData.start) el('manualStart').value = clockData.start.time;
+        if (!el('manualFinish').value && clockData.finish) el('manualFinish').value = clockData.finish.time;
+      }
+      el('startTime').value = el('manualStart').value;
+      el('finishTime').value = el('manualFinish').value;
+    } else {
+      el('startTime').value = clockData.start ? clockData.start.time : '';
+      el('finishTime').value = clockData.finish ? clockData.finish.time : '';
+    }
+
+    el('startDisplay').textContent = clockData.start ? clockData.start.time : '--:--';
+    el('finishDisplay').textContent = clockData.finish ? clockData.finish.time : '--:--';
+    el('startBox').classList.toggle('done', !!clockData.start);
+    el('finishBox').classList.toggle('done', !!clockData.finish);
+    el('startUndo').style.display = clockData.start ? 'inline-block' : 'none';
+    el('finishUndo').style.display = clockData.finish ? 'inline-block' : 'none';
+    el('finishBtn').disabled = !clockData.start;
+    updateTotalTime();
+  }
+
+  function workedMinutes() {
+    const s = document.getElementById('startTime').value, f = document.getElementById('finishTime').value;
+    if (!s || !f) return null;
+    const [sh, sm] = s.split(':').map(Number), [fh, fm] = f.split(':').map(Number);
+    const diff = (fh * 60 + fm) - (sh * 60 + sm);
+    if (diff < 0) return -1;
+    return Math.max(0, diff - Number(document.getElementById('breakMins').value || 0));
+  }
+
+  function validateTimes(missing) {
+    if (isManualTimes()) {
+      if (!document.getElementById('manualStart').value) missing.push('Time on site — start time');
+      if (!document.getElementById('manualFinish').value) missing.push('Time on site — finish time');
+    } else {
+      if (!clockData.start) missing.push('Time on site — tap Start (or tick "I forgot to tap Start / Finish" to enter times by hand)');
+      else if (!clockData.finish) missing.push('Time on site — tap Finish as you leave site');
+    }
+    if (workedMinutes() === -1) missing.push('Time on site — finish must be after start');
+  }
+
   function updateTotalTime() {
-    const startVal = document.getElementById('startTime').value;
-    const finishVal = document.getElementById('finishTime').value;
-    document.getElementById('totalTime').value = calculateDurationLabel(startVal, finishVal);
+    const mins = workedMinutes();
+    let label = '';
+    if (mins === -1) label = 'Check times';
+    else if (mins !== null) {
+      const h = Math.floor(mins / 60), m = mins % 60;
+      label = (h ? h + (h === 1 ? ' hour' : ' hours') : '') + (m ? (h ? ' ' : '') + m + (m === 1 ? ' minute' : ' minutes') : '') || '0 minutes';
+    }
+    document.getElementById('totalTime').value = label;
   }
 
   const SAFETY_CHECKS = ['chkPPE', 'chkTools', 'chkSite'];
@@ -1712,7 +1891,7 @@
   // ---- Control gear, remotes & sensors ----
   const CG_FIELDS = ['cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere',
     'cgBackItems', 'cgBackReason', 'cgBackNotes'];
-  const CG_CHECKS = ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent', 'custAckShown', 'custAckGuided', 'elecAck'];
+  const CG_CHECKS = ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent', 'custAckShown', 'custAckGuided', 'elecAck', 'forgotTap'];
   let cgPhotos = []; // { name, dataUrl } — photos of where the gear was left
 
   function updateControlGear() {
@@ -1789,7 +1968,10 @@
 
   function updateCustomerSignoff() {
     const absent = document.getElementById('clientAbsent').checked;
-    document.getElementById('customerSignoff').classList.toggle('is-hidden', absent);
+    const afterLeaving = !absent && isForgotTap();
+    document.getElementById('customerSignoff').classList.toggle('is-hidden', absent || afterLeaving);
+    document.getElementById('afterLeavingNote').style.display = afterLeaving ? 'block' : 'none';
+    syncTimes();
     if (!absent && !document.getElementById('customerName').value.trim()) {
       document.getElementById('customerName').value = document.getElementById('clientName').value.trim();
     }
@@ -1797,7 +1979,7 @@
   }
 
   function validateCustomerSignoff(missing) {
-    if (document.getElementById('clientAbsent').checked) return;
+    if (document.getElementById('clientAbsent').checked || isForgotTap()) return;
     if (!document.getElementById('customerName').value.trim()) missing.push('Customer sign-off — customer name');
     if (!document.getElementById('custAckShown').checked) missing.push('Customer sign-off — shown the finished installation');
     if (!document.getElementById('custAckGuided').checked) missing.push('Customer sign-off — guided through operating the products');
@@ -1903,8 +2085,7 @@
     const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     document.getElementById('jobDate').value = today;
     document.getElementById('signoffDate').value = today;
-    populateTimeOptions('startTime');
-    populateTimeOptions('finishTime');
+    syncTimes();
     populateHoursRequired();
     populateMenRequired();
 
@@ -2075,8 +2256,16 @@
         }
       }
 
-      if (data.startTime) document.getElementById('startTime').value = data.startTime;
-      if (data.finishTime) document.getElementById('finishTime').value = data.finishTime;
+      if (data.breakMins) document.getElementById('breakMins').value = data.breakMins;
+      if (data.timeSource === 'manual') {
+        if (data.startTime) document.getElementById('manualStart').value = data.startTime;
+        if (data.finishTime) document.getElementById('manualFinish').value = data.finishTime;
+      } else {
+        clockData = {
+          start: data.startTime ? { time: data.startTime, at: data.clockStartAt || '' } : null,
+          finish: data.finishTime ? { time: data.finishTime, at: data.clockFinishAt || '' } : null
+        };
+      }
       updateTotalTime();
 
       // Individual (3rd+) installer times
@@ -2128,6 +2317,7 @@
       updateIncidentPanel();
       CG_FIELDS.forEach(id => { if (data[id]) document.getElementById(id).value = data[id]; });
       ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent'].forEach(id => { if (data[id]) document.getElementById(id).checked = data[id] === 'Yes'; });
+      if (data.timesForgotten) document.getElementById('forgotTap').checked = data.timesForgotten === 'Yes';
       if (data.customerName) document.getElementById('customerName').value = data.customerName;
       ELEC_FIELDS.forEach(id => { if (data[id]) document.getElementById(id).value = data[id]; });
       if (data.elecAck) document.getElementById('elecAck').checked = data.elecAck === 'Yes';
@@ -2304,8 +2494,6 @@
       ['siteAddress', 'Site Address'],
       ['jobDate', 'Date of Installation'],
       ['projectManager', 'Project Manager'],
-      ['startTime', 'Start Time'],
-      ['finishTime', 'Finish Time'],
       ['tasksDone', 'Description of Tasks Undertaken']
     ];
     let missing = [];
@@ -2338,6 +2526,7 @@
       }
     });
 
+    validateTimes(missing);
     validateElectrical(missing);
     validateControlGear(missing);
     if (!document.getElementById('incident').value) missing.push('Safety — incident question');
@@ -2384,6 +2573,20 @@
       formData.append('startTime', document.getElementById('startTime').value);
       formData.append('finishTime', document.getElementById('finishTime').value);
       formData.append('totalTime', document.getElementById('totalTime').value);
+      formData.append('breakMins', document.getElementById('breakMins').value);
+      formData.append('timeSource', isManualTimes() ? 'manual' : 'buttons');
+      if (!isManualTimes()) {
+        [['start', 'clockStart'], ['finish', 'clockFinish']].forEach(([k, prefix]) => {
+          const c = clockData[k];
+          if (!c) return;
+          formData.append(prefix + 'At', c.at || '');
+          if (c.lat != null) {
+            formData.append(prefix + 'Lat', String(c.lat));
+            formData.append(prefix + 'Lng', String(c.lng));
+            formData.append(prefix + 'Acc', String(c.acc));
+          }
+        });
+      }
 
       if (crewNames.length >= 3) {
         const mainStart = document.getElementById('startTime').value;
@@ -2416,8 +2619,10 @@
       ELEC_FIELDS.forEach(id => formData.append(id, document.getElementById(id).value.trim()));
       formData.append('elecAck', document.getElementById('elecAck').checked ? 'Yes' : 'No');
       formData.append('cgPhotoCount', String(cgPhotos.length));
-      const clientAbsent = document.getElementById('clientAbsent').checked;
-      formData.append('clientAbsent', clientAbsent ? 'Yes' : 'No');
+      const noSignoff = document.getElementById('clientAbsent').checked || isForgotTap();
+      const clientAbsent = noSignoff;
+      formData.append('clientAbsent', document.getElementById('clientAbsent').checked ? 'Yes' : 'No');
+      formData.append('timesForgotten', isForgotTap() ? 'Yes' : 'No');
       formData.append('customerName', clientAbsent ? '' : document.getElementById('customerName').value.trim());
       formData.append('custAckShown', !clientAbsent && document.getElementById('custAckShown').checked ? 'Yes' : 'No');
       formData.append('custAckGuided', !clientAbsent && document.getElementById('custAckGuided').checked ? 'Yes' : 'No');
@@ -2461,10 +2666,16 @@
         draftSavingEnabled = false;
         document.getElementById('draftStatus').textContent = 'Submitted — draft cleared from this device.';
         document.getElementById('draftBanner').classList.remove('show');
-        const folderNote = result.folderUrl ? '\n\nSaved to: ' + result.folderName : '';
         const warningNote = result.warning ? '\n\n' + result.warning : '';
-        showBanner('success', 'Report submitted successfully.' + folderNote + warningNote);
-        submitBtn.textContent = 'Submitted ✓';
+        if (result.unfiled) {
+          // Saved, but not in the job's folder — say so plainly rather than "success"
+          showBanner('error', result.warning || 'Saved to Unfiled - please tell the office.');
+          submitBtn.textContent = 'Saved to Unfiled';
+        } else {
+          const folderNote = result.folderUrl ? '\n\nSaved to: ' + result.folderName : '';
+          showBanner('success', 'Report submitted successfully.' + folderNote + warningNote);
+          submitBtn.textContent = 'Submitted ✓';
+        }
       } else {
         showBanner('error', 'Submission failed: ' + (result.error || 'Unknown error') + '\n\nPlease try again, or use "Print / Save as PDF" and send this report to the office manually.');
         submitBtn.disabled = false;
@@ -2494,7 +2705,7 @@
     'startTime', 'finishTime', 'tasksDone', 'remainingWork', 'timeRequired', 'menRequired', 'signoffDate',
     'incident', 'incidentDetails',
     'cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere', 'cgBackItems', 'cgBackReason', 'cgBackNotes',
-    'customerName',
+    'customerName', 'manualStart', 'manualFinish', 'breakMins',
     'elecInvolved', 'elecStatus', 'elecContractor', 'elecContractorOther', 'elecNotes'];
 
   let draftSavingEnabled = false;
@@ -2515,6 +2726,7 @@
       : document.getElementById('statusIncomplete').classList.contains('active') ? 'incomplete' : '';
     draft.individualTimes = JSON.parse(JSON.stringify(individualTimesData));
     draft.signoffName = getSignoffName();
+    draft.clock = clockData;
     draft.checks = {};
     SAFETY_CHECKS.concat(CG_CHECKS).forEach(id => { draft.checks[id] = document.getElementById(id).checked; });
     return draft;
@@ -2538,6 +2750,7 @@
     updateTotalTime();
     if (draft.status) setStatus(draft.status);
     SAFETY_CHECKS.concat(CG_CHECKS).forEach(id => { if (draft.checks && draft.checks[id] !== undefined) document.getElementById(id).checked = !!draft.checks[id]; });
+    if (draft.clock) clockData = draft.clock;
     updateIncidentPanel();
     updateElectrical();
     updateCustomerSignoff();

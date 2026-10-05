@@ -1153,7 +1153,7 @@
     <div class="grid hours-row">
       <div class="field">
         <label for="breakMins">Break</label>
-        <select id="breakMins" onchange="updateDayHours()">
+        <select id="breakMins" onchange="this.dataset.userSet = 'yes'; updateDayHours();">
           <option value="0">No break</option>
           <option value="15">15 minutes</option>
           <option value="30" selected>30 minutes</option>
@@ -1161,6 +1161,7 @@
           <option value="60">1 hour</option>
           <option value="90">1.5 hours</option>
         </select>
+        <div class="hint" id="breakHint"></div>
       </div>
       <div class="field">
         <label for="totalHours">Total Hours Worked</label>
@@ -1575,6 +1576,7 @@
       renderCalendarJobs();
       renderRoute();
       ensureSomeJob();
+      applyJobReportBreaks();
       setDayStatus(calendarJobs.length
         ? calendarJobs.length + (calendarJobs.length === 1 ? ' appointment' : ' appointments') + ' loaded from your calendar at ' + nowHHMM() + '.'
         : 'No confirmed appointments in your calendar for this day. Add the jobs you did below.');
@@ -1588,6 +1590,29 @@
       dayLoading = false;
       $('loadDayBtn').disabled = false;
     }
+  }
+
+  // Sets Break to the total of the breaks recorded on today's Job Reports,
+  // unless the installer has chosen a break themselves.
+  function applyJobReportBreaks() {
+    const sel = $('breakMins');
+    if (sel.dataset.userSet === 'yes') return;
+    const total = calendarJobs.reduce((sum, j) => {
+      const flags = calendarFlags[j.eventId] || {};
+      return sum + (j.djr && j.djr.submitted && !flags.skipped ? (Number(j.djr.breakMins) || 0) : 0);
+    }, 0);
+    if (!calendarJobs.some(j => j.djr && j.djr.submitted)) return; // nothing to go on yet
+    const value = String(total);
+    if (!Array.from(sel.options).some(o => o.value === value)) {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = formatDuration(total);
+      sel.appendChild(opt);
+    }
+    sel.value = value;
+    const hint = $('breakHint');
+    if (hint) hint.textContent = 'Total of the breaks on your Job Reports — change it if needed.';
+    updateDayHours();
   }
 
   function onDayChanged() {
@@ -1634,6 +1659,7 @@
         const d = job.djr;
         const mins = diffMinutes(d.arrive, d.depart);
         html += '<dt>On site</dt><dd>' + escapeHtml((d.arrive || '?') + '–' + (d.depart || '?') + (mins !== null ? ' (' + formatDuration(mins) + ')' : '')) + '</dd>' +
+          (d.breakMins ? '<dt>Break</dt><dd>' + escapeHtml(formatDuration(d.breakMins)) + '</dd>' : '') +
           '<dt>Outcome</dt><dd>' + escapeHtml(d.status || '—') + '</dd>' +
           '<dt>Work done</dt><dd>' + escapeHtml(d.tasksDone || '—') + '</dd>' +
           (d.outstanding ? '<dt>Outstanding</dt><dd>' + escapeHtml(d.outstanding) + '</dd>' : '') +

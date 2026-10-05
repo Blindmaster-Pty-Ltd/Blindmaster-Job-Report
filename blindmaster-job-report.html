@@ -659,6 +659,39 @@
   #incidentPanel { display: none; }
   #incidentPanel.show { display: block; }
 
+  /* Control gear */
+  .cg-sub {
+    border: 1.5px solid var(--grey-line);
+    border-left: 4px solid var(--gold);
+    border-radius: 8px;
+    padding: 14px 16px 2px;
+    margin-bottom: 14px;
+    background: #FCFCFD;
+  }
+  .cg-sub-title { font-weight: 800; color: var(--navy); font-size: 14px; margin-bottom: 12px; }
+  .cg-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 10px; }
+  .cg-photo { position: relative; border: 1px solid var(--grey-line); border-radius: 6px; overflow: hidden; background: var(--white); }
+  .cg-photo img { display: block; width: 100%; height: 110px; object-fit: cover; }
+  .cg-photo button {
+    position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%;
+    border: none; background: rgba(11,30,61,0.75); color: var(--white); font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  body.capturing-for-pdf .cg-photo button { display: none !important; }
+
+  /* Customer sign-off */
+  .customer-signoff {
+    border: 1.5px solid var(--grey-line);
+    border-left: 4px solid var(--green);
+    border-radius: 8px;
+    padding: 16px 16px 16px;
+    background: #FCFCFD;
+  }
+  .customer-signoff.is-hidden { display: none; }
+  .signoff-intro { margin: -4px 0 14px; font-size: 13px; color: var(--grey); font-weight: 600; }
+  label.check-item.absent-item.checked { border-color: var(--amber); background: var(--amber-pale); }
+  .cg-locked-note { display: none; margin: -4px 0 14px; padding: 10px 12px; border-radius: 6px; background: var(--amber-pale); color: var(--amber); font-size: 12.5px; font-weight: 700; }
+  .cg-locked-note.show { display: block; }
+
   /* Auto-saved draft (saving as you go) */
   .draft-status {
     font-size: 11.5px;
@@ -696,6 +729,97 @@
   body.capturing-for-pdf .draft-banner,
   body.capturing-for-pdf .draft-status,
   body.capturing-for-pdf #prefillBanner { display: none !important; }
+
+  /* ================= BLINDMASTER CI =================
+     From the Blindmaster Styleguide (Webthinking, Nov 2023):
+     Monument Grey #404141 · Pastel Blue #9DBCD0 · Sandstone #E9E6E0 ·
+     Natural White #FAFAFA · Manrope 400/500/700 · square corners ·
+     no shadows or gradients. The older variable names (--navy, --gold…)
+     are mapped onto the brand colours so every component follows. */
+  :root {
+    --bm-monument-grey: #404141;
+    --bm-pastel-blue: #9DBCD0;
+    --bm-sandstone: #E9E6E0;
+    --bm-natural-white: #FAFAFA;
+    --navy: var(--bm-monument-grey);
+    --navy-light: #2E2F2F;
+    --navy-pale: var(--bm-sandstone);
+    --gold: var(--bm-pastel-blue);
+    --gold-dark: var(--bm-monument-grey);
+    --gold-pale: #E3ECF2;
+    --ink: #000000;
+    --grey: #5C5D5D;
+    --grey-line: #D3CFC7;
+    --control-line: #8C8D8D;
+  }
+
+  body { background: var(--bm-sandstone); font-family: 'Manrope', system-ui, sans-serif; }
+
+  /* Header: JobReportHeader spec */
+  .header { background: var(--bm-monument-grey); padding: 32px 24px 44px; }
+  .header::after { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 6px; background: var(--bm-pastel-blue); }
+  .header-inner { align-items: flex-end; }
+  .brand-mark { gap: 10px; }
+  .brand-logo { height: 26px; }
+  .brand-sub { font-size: 13px; line-height: 18px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--bm-sandstone); opacity: 1; }
+  .doc-title h1 { font-size: 24px; line-height: 32px; font-weight: 700; color: #FFFFFF; }
+  .doc-title .ref { font-size: 13px; line-height: 18px; font-weight: 500; color: var(--bm-pastel-blue); opacity: 1; margin-top: 2px; }
+  .container { margin-top: 24px; }
+  /* Logo hard left of the header bar, app-sized; title on the right */
+  .header-inner { max-width: none; margin: 0; align-items: center; }
+  .brand-mark { gap: 0; }
+  .brand-logo { height: 20px; }
+  @media (max-width: 600px) {
+    .header { padding: 24px 20px 34px; }
+    .header-inner { align-items: flex-start; gap: 18px; }
+    .brand-logo { height: 18px; }
+    .doc-title h1 { font-size: 22px; line-height: 28px; }
+  }
+
+  /* Panels: flat white fields on Sandstone, square */
+  .card { background: #FFFFFF; border: none; box-shadow: none; border-radius: 0; }
+  .section-num { border-radius: 0; background: var(--bm-monument-grey); color: var(--bm-pastel-blue); }
+  .section-title { color: var(--bm-monument-grey); font-weight: 700; }
+  label { color: var(--bm-monument-grey); }
+  .req { color: var(--bm-monument-grey); }
+  .count-value, .stat .v, .job-num, .btn-primary, .cg-sub-title, .time-readout strong { font-weight: 700; }
+
+  /* Controls */
+  input[type="text"], input[type="time"], input[type="date"], input[type="number"], textarea, select {
+    border-color: var(--control-line); border-radius: 0; background: #FFFFFF;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--bm-monument-grey); outline: 2px solid var(--bm-pastel-blue); outline-offset: 1px; }
+  .btn-primary { background: var(--bm-pastel-blue); color: var(--bm-monument-grey); }
+  .btn-primary:hover { background: var(--bm-monument-grey); color: #FFFFFF; }
+  .btn-secondary { border-color: var(--bm-monument-grey); color: var(--bm-monument-grey); }
+  .add-btn .plus { color: var(--bm-pastel-blue); }
+  .dictate-btn svg { display: block; }
+  button, .file-btn, .btn-link, .add-btn, .icon-btn, .clear-sig-btn, .dictate-btn, .status-option, .media-uploader,
+  .file-chip, .crew-count-banner, .stat, .job-card, .receipt-card, .cg-sub, .customer-signoff, .pending-box,
+  .draft-banner, .status-banner .inner, .modal-box, .sig-pad-wrap, .receipt-photo, .route-map, .seg,
+  label.check-item, .day-bar, .cg-photo, .cg-locked-note, #prefillBanner { border-radius: 0 !important; }
+
+  /* Fields and notices */
+  .crew-count-banner, .stat { border: none; background: var(--bm-sandstone); }
+  .media-uploader { border: 1.5px dashed var(--control-line); background: var(--bm-natural-white); }
+  .media-uploader.has-files { border-color: var(--bm-monument-grey); background: var(--gold-pale); }
+  .media-uploader .m-icon { color: var(--bm-monument-grey); display: flex; justify-content: center; }
+  .job-card, .cg-sub { border-left-color: var(--bm-pastel-blue); }
+  .draft-banner, #prefillBanner {
+    background: var(--gold-pale) !important; color: var(--bm-monument-grey) !important;
+    border: none !important; border-left: 6px solid var(--bm-pastel-blue) !important;
+  }
+  .day-bar { background: var(--bm-sandstone); }
+  .footer-note { color: var(--grey); }
+
+  /* Keep the Pastel Blue band in print and in the submitted PDF */
+  body.capturing-for-pdf { background: #FFFFFF; }
+  body.capturing-for-pdf .header::after { display: block !important; }
+  @media print {
+    body { background: #FFFFFF; }
+    .header::after { display: block !important; }
+    .card { border: 1px solid var(--grey-line); }
+  }
 </style>
 </head>
 <body>
@@ -704,7 +828,6 @@
   <div class="header-inner">
     <div class="brand-mark">
       <img src="data:image/png;base64,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" alt="Blindmaster" class="brand-logo">
-      <div class="brand-sub">The Complete Outdoor Room</div>
     </div>
     <div class="doc-title">
       <h1>Installation Job Report</h1>
@@ -719,7 +842,7 @@
   <div id="draftStatus" class="draft-status">Your progress saves automatically on this device.</div>
 
   <div id="prefillBanner" style="display:none; background:var(--gold-pale); border:1px solid var(--gold-dark); border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:12.5px; color:var(--navy); font-weight:600;">
-    &#128198; Job details loaded from calendar appointment. Please check they're correct before submitting.
+    Job details loaded from calendar appointment. Please check they're correct before submitting.
   </div>
 
   <input type="hidden" id="calEventId">
@@ -821,12 +944,12 @@
       <label style="display:flex; align-items:center; justify-content:space-between;">
         <span>Work Performed <span class="req">*</span></span>
         <button type="button" id="dictateBtn-tasksDone" class="dictate-btn" onclick="toggleDictation('tasksDone')">
-          <span id="dictateIcon-tasksDone">&#127908;</span>
+          <span id="dictateIcon-tasksDone"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
           <span id="dictateLabel-tasksDone">Fill by Voice</span>
         </button>
       </label>
       <textarea id="tasksDone" placeholder="Describe the installation work carried out today — products installed, areas covered, any variations from scope, issues encountered, etc." style="min-height: 140px;"></textarea>
-      <div class="hint" id="dictateHint-tasksDone" style="display:none;">&#127908; Listening — speak now. Click "Stop" when finished.</div>
+      <div class="hint" id="dictateHint-tasksDone" style="display:none;">Listening — speak now. Click "Stop" when finished.</div>
       <div class="hint" id="dictateUnsupported-tasksDone" style="display:none;">Voice input isn't supported in this browser. Try Chrome on desktop or Android.</div>
     </div>
   </div>
@@ -844,7 +967,7 @@
         <span class="label">Completed</span>
       </div>
       <div class="status-option incomplete" id="statusIncomplete" onclick="setStatus('incomplete')">
-        <span class="icon">&#9888;</span>
+        <span class="icon">!</span>
         <span class="label">Not Completed</span>
       </div>
     </div>
@@ -854,12 +977,12 @@
         <label style="display:flex; align-items:center; justify-content:space-between;">
           <span>Outstanding Work / What Remains to Be Done <span class="req" id="reqRemainingWork" style="display:none;">*</span></span>
           <button type="button" id="dictateBtn-remainingWork" class="dictate-btn" onclick="toggleDictation('remainingWork')">
-            <span id="dictateIcon-remainingWork">&#127908;</span>
+            <span id="dictateIcon-remainingWork"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
             <span id="dictateLabel-remainingWork">Fill by Voice</span>
           </button>
         </label>
         <textarea id="remainingWork" placeholder="Describe exactly what still needs to be completed"></textarea>
-        <div class="hint" id="dictateHint-remainingWork" style="display:none;">&#127908; Listening — speak now. Click "Stop" when finished.</div>
+        <div class="hint" id="dictateHint-remainingWork" style="display:none;">Listening — speak now. Click "Stop" when finished.</div>
         <div class="hint" id="dictateUnsupported-remainingWork" style="display:none;">Voice input isn't supported in this browser. Try Chrome on desktop or Android.</div>
       </div>
       <div class="grid">
@@ -879,10 +1002,149 @@
     </div>
   </div>
 
-  <!-- MEDIA -->
+  <!-- ELECTRICAL WORKS -->
   <div class="card">
     <div class="section-label">
       <div class="section-num">6</div>
+      <div class="section-title">Electrical Works</div>
+    </div>
+    <div class="field">
+      <label for="elecInvolved">Were any motorised or electrical products installed? <span class="req">*</span></label>
+      <select id="elecInvolved" onchange="updateElectrical()">
+        <option value="">Select</option>
+        <option value="No">No — no electrical products on this job</option>
+        <option value="Yes">Yes</option>
+      </select>
+    </div>
+
+    <div id="elecPanel" style="display:none;">
+      <div class="field">
+        <label for="elecStatus">Electrical Status <span class="req">*</span></label>
+        <select id="elecStatus" onchange="updateElectrical()">
+          <option value="">Select</option>
+          <option value="Tested and commissioned by Blindmaster installers">Tested &amp; commissioned by Blindmaster installers</option>
+          <option value="Third-party electrical works completed — tested and commissioned">Third-party electrical works completed — products tested, commissioned &amp; in full working order</option>
+          <option value="Still to be connected">Still to be connected by the electrical contractor</option>
+        </select>
+      </div>
+
+      <div class="grid" id="elecContractorRow" style="display:none;">
+        <div class="field">
+          <label for="elecContractor">Electrical Contractor <span class="req">*</span></label>
+          <select id="elecContractor" onchange="updateElectrical()">
+            <option value="">Select</option>
+            <option value="Waterview Electrical">Waterview Electrical</option>
+            <option value="Somfy Electrical Services">Somfy Electrical Services</option>
+            <option value="Client's own electrician">Client's own electrician</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field" id="elecContractorOtherField" style="display:none;">
+          <label for="elecContractorOther">Contractor Name <span class="req">*</span></label>
+          <input type="text" id="elecContractorOther" placeholder="Company or electrician's name">
+        </div>
+      </div>
+
+      <div class="check-list" id="elecAckRow" style="display:none; margin-bottom:16px;">
+        <label class="check-item"><input type="checkbox" id="elecAck"> I confirm the product(s) have been tested and commissioned and are in full working order. <span class="req">*</span></label>
+      </div>
+
+      <div class="field" style="margin-bottom:0;">
+        <label for="elecNotes"><span id="elecNotesLabel">Electrical Notes</span> <span class="req" id="elecNotesReq" style="display:none;">*</span></label>
+        <textarea id="elecNotes" style="min-height:70px;" placeholder="Anything the office or electrician needs to know"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROL GEAR -->
+  <div class="card">
+    <div class="section-label">
+      <div class="section-num">7</div>
+      <div class="section-title">Control Gear, Remotes &amp; Sensors</div>
+    </div>
+    <div class="field">
+      <label for="cgSupplied">Was any control gear supplied for this job? <span class="req">*</span></label>
+      <select id="cgSupplied" onchange="updateControlGear()">
+        <option value="">Select</option>
+        <option value="No">No — none for this job</option>
+        <option value="Yes">Yes</option>
+      </select>
+      <div class="hint">Remotes, wall switches, sensors (wind, sun, rain), hubs, receivers or controllers.</div>
+    </div>
+
+    <div id="cgPanel" style="display:none;">
+      <div class="cg-locked-note" id="cgLockedNote">The client wasn't on site (see Sign-Off), so control gear can't be left on site — take it back to the warehouse.</div>
+      <div class="check-list" style="margin-bottom:14px;">
+        <label class="check-item"><input type="checkbox" id="cgLeftOnSite" onchange="updateControlGear()"> Some or all was left on site</label>
+        <label class="check-item"><input type="checkbox" id="cgTakenBack" onchange="updateControlGear()"> Some or all was taken back to the warehouse</label>
+      </div>
+
+      <div id="cgLeftPanel" class="cg-sub" style="display:none;">
+        <div class="cg-sub-title">Left on site</div>
+        <div class="field">
+          <label for="cgLeftItems">What Was Left <span class="req">*</span></label>
+          <textarea id="cgLeftItems" style="min-height:70px;" placeholder="e.g. 2 x 5-channel remotes, 1 x wind sensor (installed), 1 x hub"></textarea>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label for="cgLeftWith">Left With <span class="req">*</span></label>
+            <select id="cgLeftWith" onchange="updateControlGear()">
+              <option value="">Select</option>
+              <option value="Client">Client</option>
+              <option value="Builder">Builder</option>
+              <option value="Site supervisor">Site supervisor</option>
+              <option value="Nobody — left in a safe place">Nobody — left in a safe place</option>
+              <option value="Other person">Other person</option>
+            </select>
+          </div>
+          <div class="field" id="cgLeftWithNameField">
+            <label for="cgLeftWithName">Their Name <span class="req">*</span></label>
+            <input type="text" id="cgLeftWithName" placeholder="Who you handed it to">
+          </div>
+        </div>
+        <div class="field">
+          <label for="cgLeftWhere">Where on Site <span class="req">*</span></label>
+          <input type="text" id="cgLeftWhere" placeholder="e.g. Kitchen bench, in the box with the instruction manuals">
+        </div>
+        <div class="field">
+          <label>Photo of Where It Was Left</label>
+          <div class="file-input-wrap">
+            <label class="file-btn" for="cgPhotoInput" tabindex="0">Add Photo</label>
+            <input type="file" id="cgPhotoInput" accept="image/*" multiple onchange="addControlGearPhotos(this.files); this.value='';">
+          </div>
+          <div class="hint">Recommended — shows the client and the office exactly where it is.</div>
+          <div class="cg-photos" id="cgPhotoList"></div>
+        </div>
+      </div>
+
+      <div id="cgBackPanel" class="cg-sub" style="display:none;">
+        <div class="cg-sub-title">Taken back to the warehouse</div>
+        <div class="field">
+          <label for="cgBackItems">What Was Taken Back <span class="req">*</span></label>
+          <textarea id="cgBackItems" style="min-height:70px;" placeholder="e.g. 3 x single-channel remotes, 1 x sun sensor"></textarea>
+        </div>
+        <div class="field">
+          <label for="cgBackReason">To Be Delivered <span class="req">*</span></label>
+          <select id="cgBackReason" onchange="updateControlGear()">
+            <option value="">Select</option>
+            <option value="After the invoice is paid">After the invoice is paid</option>
+            <option value="At the next visit">At the next visit</option>
+            <option value="Client to collect from the warehouse">Client to collect from the warehouse</option>
+            <option value="Other">Other (explain below)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cgBackNotes">Notes <span class="req" id="cgBackNotesReq" style="display:none;">*</span></label>
+          <textarea id="cgBackNotes" style="min-height:60px;" placeholder="Anything the office needs to know"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEDIA -->
+  <div class="card">
+    <div class="section-label">
+      <div class="section-num">8</div>
       <div class="section-title">Site Collateral</div>
     </div>
     <div class="media-tab-note">Attach photos, videos, or voice recordings documenting the completed work, site conditions, or any issues raised.</div>
@@ -890,7 +1152,7 @@
     <div class="media-grid">
       <div>
         <div class="media-uploader" id="uploader-photo">
-          <div class="m-icon">&#128247;</div>
+          <div class="m-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
           <div class="m-title">Photos</div>
           <div class="m-sub">JPG, PNG, HEIC</div>
           <div class="file-input-wrap">
@@ -902,7 +1164,7 @@
       </div>
       <div>
         <div class="media-uploader" id="uploader-video">
-          <div class="m-icon">&#127916;</div>
+          <div class="m-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="6" width="13" height="12"/><path d="M16 10l5-3v10l-5-3z"/></svg></div>
           <div class="m-title">Videos</div>
           <div class="m-sub">MP4, MOV</div>
           <div class="file-input-wrap">
@@ -914,7 +1176,7 @@
       </div>
       <div>
         <div class="media-uploader" id="uploader-audio">
-          <div class="m-icon">&#127908;</div>
+          <div class="m-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
           <div class="m-title">Voice Notes</div>
           <div class="m-sub">MP3, M4A, WAV</div>
           <div class="file-input-wrap">
@@ -930,7 +1192,7 @@
   <!-- SAFETY -->
   <div class="card">
     <div class="section-label">
-      <div class="section-num">7</div>
+      <div class="section-num">9</div>
       <div class="section-title">Safety &amp; Site Checks</div>
     </div>
     <div class="field">
@@ -945,12 +1207,12 @@
       <label style="display:flex; align-items:center; justify-content:space-between;">
         <span>What Happened <span class="req">*</span></span>
         <button type="button" id="dictateBtn-incidentDetails" class="dictate-btn" onclick="toggleDictation('incidentDetails')">
-          <span id="dictateIcon-incidentDetails">&#127908;</span>
+          <span id="dictateIcon-incidentDetails"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
           <span id="dictateLabel-incidentDetails">Fill by Voice</span>
         </button>
       </label>
       <textarea id="incidentDetails" placeholder="Where, when, who was involved, any injury or damage, and what was done about it. The office will follow up with you."></textarea>
-      <div class="hint" id="dictateHint-incidentDetails" style="display:none;">&#127908; Listening — speak now. Click "Stop" when finished.</div>
+      <div class="hint" id="dictateHint-incidentDetails" style="display:none;">Listening — speak now. Click "Stop" when finished.</div>
       <div class="hint" id="dictateUnsupported-incidentDetails" style="display:none;">Voice input isn't supported in this browser. Try Chrome on desktop or Android.</div>
     </div>
     <div class="check-list">
@@ -963,8 +1225,8 @@
   <!-- SIGN OFF -->
   <div class="card">
     <div class="section-label">
-      <div class="section-num">8</div>
-      <div class="section-title">Installer Sign-Off</div>
+      <div class="section-num">10</div>
+      <div class="section-title">Sign-Off</div>
     </div>
     <div class="grid">
       <div class="field">
@@ -979,16 +1241,32 @@
         <input type="date" id="signoffDate">
       </div>
     </div>
-    <div class="field">
-      <label>Signature</label>
-      <div class="sig-pad-wrap">
-        <canvas id="sigPad" class="sig-pad" width="800" height="180"></canvas>
-        <div class="sig-pad-placeholder" id="sigPlaceholder">Sign here with your finger or mouse</div>
+
+    <div class="customer-signoff" id="customerSignoff">
+      <div class="cg-sub-title">Customer Sign-Off</div>
+      <p class="signoff-intro">Please hand the device to the customer to read, tick and sign.</p>
+      <div class="field">
+        <label for="customerName">Customer Name <span class="req">*</span></label>
+        <input type="text" id="customerName" placeholder="Name of the person signing">
       </div>
-      <div style="display:flex; justify-content:flex-end; margin-top:6px;">
-        <button type="button" class="clear-sig-btn" onclick="clearSignature()">Clear Signature</button>
+      <div class="check-list" style="margin-bottom:16px;">
+        <label class="check-item"><input type="checkbox" id="custAckShown"> I have been shown the finished installation.</label>
+        <label class="check-item"><input type="checkbox" id="custAckGuided"> I have been guided through how to operate the products.</label>
       </div>
-      <div class="hint">Or, if signing isn't possible on this device, select your name in "Reporting Installer Name" above as your digital confirmation.</div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Customer Signature <span class="req">*</span></label>
+        <div class="sig-pad-wrap">
+          <canvas id="sigPad" class="sig-pad" width="800" height="180"></canvas>
+          <div class="sig-pad-placeholder" id="sigPlaceholder">Customer to sign here with their finger</div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:6px;">
+          <button type="button" class="clear-sig-btn" onclick="clearSignature()">Clear Signature</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="check-list" style="margin-top:16px;">
+      <label class="check-item absent-item"><input type="checkbox" id="clientAbsent" onchange="updateCustomerSignoff()"> <span><strong>The client was not on site</strong> to sign off. No control gear has been left on site.</span></label>
     </div>
   </div>
 
@@ -1002,12 +1280,15 @@
 </div>
 
 <div class="footer-note">
-  Blindmaster Pty Ltd &nbsp;&middot;&nbsp; Installation Job Report &nbsp;&middot;&nbsp; Internal Use — Retain for Client File
+  Blindmaster Pty Ltd &nbsp;&middot;&nbsp; ABN 87 002 515 157 &nbsp;&middot;&nbsp; Lic. 250658C<br>
+  Installation Job Report &nbsp;&middot;&nbsp; Internal use — retain for client file
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
+  const MIC_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+  const STOP_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="7" y="7" width="10" height="10"/></svg>';
   let crewRowCount = 0;
 
   function addCrewRow(name) {
@@ -1343,12 +1624,12 @@
 
     if (recording) {
       btn.classList.add('recording');
-      icon.innerHTML = '&#9209;';
+      icon.innerHTML = STOP_ICON;
       label.textContent = 'Stop';
       hint.style.display = 'block';
     } else {
       btn.classList.remove('recording');
-      icon.innerHTML = '&#127908;';
+      icon.innerHTML = MIC_ICON;
       label.textContent = 'Fill by Voice';
       hint.style.display = 'none';
     }
@@ -1387,6 +1668,165 @@
   }
 
   const SAFETY_CHECKS = ['chkPPE', 'chkTools', 'chkSite'];
+
+  // ---- Electrical works ----
+  const ELEC_FIELDS = ['elecInvolved', 'elecStatus', 'elecContractor', 'elecContractorOther', 'elecNotes'];
+  const ELEC_STILL_TO_CONNECT = 'Still to be connected';
+  const ELEC_BY_BLINDMASTER = 'Tested and commissioned by Blindmaster installers';
+
+  function updateElectrical() {
+    const el = id => document.getElementById(id);
+    const yes = el('elecInvolved').value === 'Yes';
+    const status = el('elecStatus').value;
+    const thirdParty = !!status && status !== ELEC_BY_BLINDMASTER;
+    el('elecPanel').style.display = yes ? 'block' : 'none';
+    el('elecContractorRow').style.display = yes && thirdParty ? 'grid' : 'none';
+    el('elecContractorOtherField').style.display = el('elecContractor').value === 'Other' ? 'block' : 'none';
+    el('elecAckRow').style.display = yes && status && status !== ELEC_STILL_TO_CONNECT ? 'flex' : 'none';
+    const stillToConnect = status === ELEC_STILL_TO_CONNECT;
+    el('elecNotesLabel').textContent = stillToConnect ? 'Products Still to Be Connected' : 'Electrical Notes';
+    el('elecNotesReq').style.display = stillToConnect ? 'inline' : 'none';
+    el('elecNotes').placeholder = stillToConnect
+      ? 'e.g. 3 x awning motors in the alfresco — power not yet run to the switch'
+      : 'Anything the office or electrician needs to know';
+    syncCheckStyles();
+  }
+
+  function validateElectrical(missing) {
+    const val = id => document.getElementById(id).value.trim();
+    const involved = val('elecInvolved');
+    if (!involved) { missing.push('Electrical works — were any motorised or electrical products installed?'); return; }
+    if (involved !== 'Yes') return;
+    const status = val('elecStatus');
+    if (!status) { missing.push('Electrical works — electrical status'); return; }
+    if (status !== ELEC_BY_BLINDMASTER) {
+      if (!val('elecContractor')) missing.push('Electrical works — electrical contractor');
+      else if (val('elecContractor') === 'Other' && !val('elecContractorOther')) missing.push('Electrical works — contractor name');
+    }
+    if (status !== ELEC_STILL_TO_CONNECT && !document.getElementById('elecAck').checked) {
+      missing.push('Electrical works — confirm the products are tested, commissioned and working');
+    }
+    if (status === ELEC_STILL_TO_CONNECT && !val('elecNotes')) missing.push('Electrical works — which products are still to be connected');
+  }
+
+  // ---- Control gear, remotes & sensors ----
+  const CG_FIELDS = ['cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere',
+    'cgBackItems', 'cgBackReason', 'cgBackNotes'];
+  const CG_CHECKS = ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent', 'custAckShown', 'custAckGuided', 'elecAck'];
+  let cgPhotos = []; // { name, dataUrl } — photos of where the gear was left
+
+  function updateControlGear() {
+    const el = id => document.getElementById(id);
+    const supplied = el('cgSupplied').value === 'Yes';
+    const clientAbsent = el('clientAbsent').checked;
+    el('cgLeftOnSite').disabled = clientAbsent;
+    if (clientAbsent && el('cgLeftOnSite').checked) el('cgLeftOnSite').checked = false;
+    el('cgLeftOnSite').closest('label').style.opacity = clientAbsent ? '0.45' : '';
+    el('cgLockedNote').classList.toggle('show', supplied && clientAbsent);
+    el('cgPanel').style.display = supplied ? 'block' : 'none';
+    el('cgLeftPanel').style.display = supplied && el('cgLeftOnSite').checked ? 'block' : 'none';
+    el('cgBackPanel').style.display = supplied && el('cgTakenBack').checked ? 'block' : 'none';
+
+    const leftWith = el('cgLeftWith').value;
+    el('cgLeftWithNameField').style.display = leftWith && leftWith.indexOf('Nobody') !== 0 ? 'block' : 'none';
+    if (leftWith === 'Client' && !el('cgLeftWithName').value.trim()) {
+      el('cgLeftWithName').value = el('clientName').value.trim();
+    }
+    el('cgBackNotesReq').style.display = el('cgBackReason').value === 'Other' ? 'inline' : 'none';
+    syncCheckStyles();
+  }
+
+  // Photos are shrunk to ~1600px JPEGs so they upload quickly on mobile data.
+  function shrinkPhoto(file) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onerror = () => resolve(null);
+      reader.onload = () => {
+        const original = reader.result;
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.naturalWidth * scale);
+          canvas.height = Math.round(img.naturalHeight * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          try { resolve(canvas.toDataURL('image/jpeg', 0.82)); } catch (e) { resolve(original); }
+        };
+        img.onerror = () => resolve(original);
+        img.src = original;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function addControlGearPhotos(fileList) {
+    for (const file of Array.from(fileList || [])) {
+      const dataUrl = await shrinkPhoto(file);
+      if (dataUrl) cgPhotos.push({ name: file.name, dataUrl: dataUrl });
+    }
+    renderControlGearPhotos();
+  }
+
+  function renderControlGearPhotos() {
+    const list = document.getElementById('cgPhotoList');
+    list.innerHTML = '';
+    cgPhotos.forEach((photo, idx) => {
+      const tile = document.createElement('div');
+      tile.className = 'cg-photo';
+      const img = document.createElement('img');
+      img.src = photo.dataUrl;
+      img.alt = 'Where the control gear was left, photo ' + (idx + 1);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Remove photo ' + (idx + 1));
+      btn.innerHTML = '&times;';
+      btn.addEventListener('click', () => { cgPhotos.splice(idx, 1); renderControlGearPhotos(); });
+      tile.appendChild(img);
+      tile.appendChild(btn);
+      list.appendChild(tile);
+    });
+  }
+
+  function updateCustomerSignoff() {
+    const absent = document.getElementById('clientAbsent').checked;
+    document.getElementById('customerSignoff').classList.toggle('is-hidden', absent);
+    if (!absent && !document.getElementById('customerName').value.trim()) {
+      document.getElementById('customerName').value = document.getElementById('clientName').value.trim();
+    }
+    updateControlGear();
+  }
+
+  function validateCustomerSignoff(missing) {
+    if (document.getElementById('clientAbsent').checked) return;
+    if (!document.getElementById('customerName').value.trim()) missing.push('Customer sign-off — customer name');
+    if (!document.getElementById('custAckShown').checked) missing.push('Customer sign-off — shown the finished installation');
+    if (!document.getElementById('custAckGuided').checked) missing.push('Customer sign-off — guided through operating the products');
+    if (isSignaturePadEmpty()) missing.push('Customer sign-off — customer signature (or tick "The client was not on site")');
+  }
+
+  function validateControlGear(missing) {
+    const val = id => document.getElementById(id).value.trim();
+    const supplied = val('cgSupplied');
+    if (!supplied) { missing.push('Control gear — was any supplied for this job?'); return; }
+    if (supplied !== 'Yes') return;
+    const left = document.getElementById('cgLeftOnSite').checked;
+    const back = document.getElementById('cgTakenBack').checked;
+    if (!left && !back) missing.push('Control gear — left on site, or taken back to the warehouse?');
+    if (left && document.getElementById('clientAbsent').checked) {
+      missing.push('Control gear — the client wasn\'t on site, so it can\'t be left on site');
+    }
+    if (left) {
+      if (!val('cgLeftItems')) missing.push('Control gear — what was left on site');
+      if (!val('cgLeftWith')) missing.push('Control gear — who it was left with');
+      else if (val('cgLeftWith').indexOf('Nobody') !== 0 && !val('cgLeftWithName')) missing.push('Control gear — name of the person it was left with');
+      if (!val('cgLeftWhere')) missing.push('Control gear — where on site it was left');
+    }
+    if (back) {
+      if (!val('cgBackItems')) missing.push('Control gear — what was taken back to the warehouse');
+      if (!val('cgBackReason')) missing.push('Control gear — when it will be delivered');
+      if (val('cgBackReason') === 'Other' && !val('cgBackNotes')) missing.push('Control gear — notes explaining the delivery');
+    }
+  }
 
   function updateIncidentPanel() {
     document.getElementById('incidentPanel').classList.toggle('show', document.getElementById('incident').value === 'Yes');
@@ -1443,7 +1883,7 @@
     mediaStore[type].forEach((file, idx) => {
       const chip = document.createElement('div');
       chip.className = 'file-chip';
-      const icon = type === 'photo' ? '&#128247;' : type === 'video' ? '&#127916;' : '&#127908;';
+      const icon = '';
       chip.innerHTML = `
         <span class="fname">${icon} ${file.name}</span>
         <button type="button" class="remove-file" onclick="removeFile('${type}', ${idx})">&times;</button>
@@ -1477,7 +1917,10 @@
     applyPrefillFromUrl().catch(err => {
       // Prefill/draft-restore is best-effort — the report is still fully
       // usable blank if this fails for any reason.
-    }).then(enableDraftSaving);
+    }).then(() => {
+      updateCustomerSignoff(); // fills Customer Name from the client name
+      enableDraftSaving();
+    });
   });
 
   function buildTimeOptionsHTML() {
@@ -1601,7 +2044,7 @@
       const restored = await fetchAndApplyPreviousSubmission(refForLookup);
       if (restored) {
         const banner = document.getElementById('prefillBanner');
-        banner.innerHTML = '&#128198; A previous report for this job was found and loaded below. Review, update as needed, then submit.';
+        banner.innerHTML = 'A previous report for this job was found and loaded below. Review, update as needed, then submit.';
         banner.style.display = 'block';
       }
     }
@@ -1683,6 +2126,13 @@
       if (data.incidentDetails) document.getElementById('incidentDetails').value = data.incidentDetails;
       SAFETY_CHECKS.forEach(id => { if (data[id]) document.getElementById(id).checked = data[id] === 'Yes'; });
       updateIncidentPanel();
+      CG_FIELDS.forEach(id => { if (data[id]) document.getElementById(id).value = data[id]; });
+      ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent'].forEach(id => { if (data[id]) document.getElementById(id).checked = data[id] === 'Yes'; });
+      if (data.customerName) document.getElementById('customerName').value = data.customerName;
+      ELEC_FIELDS.forEach(id => { if (data[id]) document.getElementById(id).value = data[id]; });
+      if (data.elecAck) document.getElementById('elecAck').checked = data.elecAck === 'Yes';
+      updateElectrical();
+      updateCustomerSignoff(); // the customer re-ticks and re-signs on a resubmission
       syncCheckStyles();
 
       return true;
@@ -1888,14 +2338,14 @@
       }
     });
 
+    validateElectrical(missing);
+    validateControlGear(missing);
     if (!document.getElementById('incident').value) missing.push('Safety — incident question');
     if (document.getElementById('incident').value === 'Yes' && !document.getElementById('incidentDetails').value.trim()) {
       missing.push('Safety — What Happened');
     }
 
-    if (isSignaturePadEmpty() && !getSignoffName()) {
-      missing.push('Signature (draw a signature, or type your name above as confirmation)');
-    }
+    validateCustomerSignoff(missing);
 
     if (missing.length > 0) {
       showBanner('error', 'Please complete the following before submitting:\n\n' + missing.map(m => '• ' + m).join('\n'));
@@ -1961,10 +2411,24 @@
       formData.append('incident', document.getElementById('incident').value);
       formData.append('incidentDetails', document.getElementById('incidentDetails').value.trim());
       SAFETY_CHECKS.forEach(id => formData.append(id, document.getElementById(id).checked ? 'Yes' : 'No'));
+      CG_FIELDS.forEach(id => formData.append(id, document.getElementById(id).value.trim()));
+      ['cgLeftOnSite', 'cgTakenBack'].forEach(id => formData.append(id, document.getElementById(id).checked ? 'Yes' : 'No'));
+      ELEC_FIELDS.forEach(id => formData.append(id, document.getElementById(id).value.trim()));
+      formData.append('elecAck', document.getElementById('elecAck').checked ? 'Yes' : 'No');
+      formData.append('cgPhotoCount', String(cgPhotos.length));
+      const clientAbsent = document.getElementById('clientAbsent').checked;
+      formData.append('clientAbsent', clientAbsent ? 'Yes' : 'No');
+      formData.append('customerName', clientAbsent ? '' : document.getElementById('customerName').value.trim());
+      formData.append('custAckShown', !clientAbsent && document.getElementById('custAckShown').checked ? 'Yes' : 'No');
+      formData.append('custAckGuided', !clientAbsent && document.getElementById('custAckGuided').checked ? 'Yes' : 'No');
+      formData.append('customerSigned', !clientAbsent && !isSignaturePadEmpty() ? 'Yes' : 'No');
 
       let mediaPayload;
       try {
         mediaPayload = await collectMediaAsBase64();
+        cgPhotos.forEach((photo, i) => {
+          mediaPayload.push({ type: 'photo', name: 'Control gear location ' + (i + 1) + '.jpg', mimeType: 'image/jpeg', dataUrl: photo.dataUrl });
+        });
       } catch (mediaErr) {
         throw new Error('Failed while processing attached photos/video/audio: ' + describeError(mediaErr) + '. Try removing an attachment (especially a large video) and submitting again.');
       }
@@ -2028,7 +2492,10 @@
   const DRAFT_MAX_AGE_DAYS = 30;
   const DRAFT_FIELDS = ['clientName', 'jobRef', 'siteAddress', 'jobDate', 'projectManager', 'calEventId', 'calId',
     'startTime', 'finishTime', 'tasksDone', 'remainingWork', 'timeRequired', 'menRequired', 'signoffDate',
-    'incident', 'incidentDetails'];
+    'incident', 'incidentDetails',
+    'cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere', 'cgBackItems', 'cgBackReason', 'cgBackNotes',
+    'customerName',
+    'elecInvolved', 'elecStatus', 'elecContractor', 'elecContractorOther', 'elecNotes'];
 
   let draftSavingEnabled = false;
   let draftSaveTimer = null;
@@ -2049,7 +2516,7 @@
     draft.individualTimes = JSON.parse(JSON.stringify(individualTimesData));
     draft.signoffName = getSignoffName();
     draft.checks = {};
-    SAFETY_CHECKS.forEach(id => { draft.checks[id] = document.getElementById(id).checked; });
+    SAFETY_CHECKS.concat(CG_CHECKS).forEach(id => { draft.checks[id] = document.getElementById(id).checked; });
     return draft;
   }
 
@@ -2070,8 +2537,10 @@
 
     updateTotalTime();
     if (draft.status) setStatus(draft.status);
-    SAFETY_CHECKS.forEach(id => { if (draft.checks && draft.checks[id] !== undefined) document.getElementById(id).checked = !!draft.checks[id]; });
+    SAFETY_CHECKS.concat(CG_CHECKS).forEach(id => { if (draft.checks && draft.checks[id] !== undefined) document.getElementById(id).checked = !!draft.checks[id]; });
     updateIncidentPanel();
+    updateElectrical();
+    updateCustomerSignoff();
     syncCheckStyles();
 
     if (draft.signoffName) {
@@ -2139,7 +2608,7 @@
     const saved = draft.savedAt ? new Date(draft.savedAt) : null;
     const when = saved ? saved.toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : 'earlier';
     const banner = document.getElementById('draftBanner');
-    banner.innerHTML = '&#128190; Picked up where you left off (last saved ' + when + '). ' +
+    banner.innerHTML = 'Picked up where you left off (last saved ' + when + '). ' +
       'Add any photos and your signature again before submitting.<br>' +
       '<button type="button" id="discardDraftBtn">Discard my changes and reload</button>';
     banner.classList.add('show');

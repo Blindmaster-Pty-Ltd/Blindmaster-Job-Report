@@ -10,6 +10,7 @@
   'use strict';
 
   var CFG = window.FIELD_APP_CONFIG || {};
+  var APP_VERSION = '9'; // shown on the Account page and the sidebar, so it's easy to check which version is live
   var TZ = 'Australia/Sydney';
   var app = document.getElementById('app');
   var state = { user: null, cache: {}, mode: null };
@@ -752,7 +753,7 @@
           return '<a href="' + t.href + '"' + (active === t.key ? ' aria-current="page"' : '') + '>' + t.icon + '<span>' + t.label + '</span></a>';
         }).join('') + '</nav>' +
         '<a class="rail-user" href="#/account"><span class="avatar">' + esc(initials(u.name)) + '</span><span class="rail-user-text"><b>' + esc(u.name || '') + '</b><span>' + esc(roleLabel(u.role)) + '</span></span></a>' +
-        (CFG.ENVIRONMENT ? '<span class="rail-env">' + esc(CFG.ENVIRONMENT) + '</span>' : '') +
+        (CFG.ENVIRONMENT ? '<span class="rail-env">' + esc(CFG.ENVIRONMENT) + ' · v' + APP_VERSION + '</span>' : '') +
       '</aside>' +
       '<div class="content">' + content + '</div>' +
     '</div>';
@@ -1589,6 +1590,7 @@
         (u.role ? '<span class="tag" style="align-self:flex-start">' + esc(roleLabel(u.role)) + '</span>' : '') +
         (CFG.ENVIRONMENT ? '<p class="notice" style="margin:0">You are using the <b>' + esc(CFG.ENVIRONMENT) + '</b> version. Appointments here are test data.</p>' : '') +
         '<button class="btn btn-outline btn-lg" id="signout">Sign out</button>' +
+        '<p class="small muted" style="margin:0">App version ' + APP_VERSION + '</p>' +
         '<p class="small muted" style="margin:0">Add this app to your home screen: in Safari tap Share, then Add to Home Screen. In Chrome tap the menu, then Install app.</p>' +
       '</section>';
     app.innerHTML = wide() ? shell('account', null, body) : topbar() + '<main>' + body + '</main>' + tabbar('account');

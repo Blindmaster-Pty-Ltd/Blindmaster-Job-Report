@@ -10,7 +10,7 @@
   'use strict';
 
   var CFG = window.FIELD_APP_CONFIG || {};
-  var APP_VERSION = '9'; // shown on the Account page and the sidebar, so it's easy to check which version is live
+  var APP_VERSION = '10'; // shown on the Account page and the sidebar, so it's easy to check which version is live
   var TZ = 'Australia/Sydney';
   var app = document.getElementById('app');
   var state = { user: null, cache: {}, mode: null };
@@ -784,11 +784,11 @@
     var useGoogle = !!CFG.GOOGLE_CLIENT_ID;
     app.innerHTML =
       '<div class="signin"><div class="signin-card">' +
-        '<div class="plate"><img src="wordmark-white.svg" alt="Blindmaster">' +
-          '<div class="stack"><h1>Sign in to start your day</h1><p style="margin:0">Your schedule, job details and directions in one place.</p></div>' +
-          (CFG.ENVIRONMENT ? '<span class="tag tag-blue" style="align-self:flex-start">' + esc(CFG.ENVIRONMENT) + '</span>' : '') +
-        '</div><div class="band"></div>' +
+        '<div class="si-hero"><img class="hero-img" src="signin-hero.jpg" alt="Light falling through outdoor shading">' +
+          '<div class="hero-bar"><img src="wordmark-white.svg" alt="Blindmaster"><span>' + esc(CFG.ENVIRONMENT || 'Field app') + '</span></div>' +
+        '</div>' +
         '<div class="body">' +
+          '<div class="stack" style="gap:6px"><h1>Sign in to start your day</h1><p class="muted" style="margin:0">Your schedule, job details and reports for today, in one place.</p></div>' +
           (errorMsg ? '<p class="notice error" role="alert">' + esc(errorMsg) + '</p>' : '') +
           (useGoogle
             ? '<div id="gbtn" style="min-height:48px"></div><p class="small muted" style="margin:0">Use your Blindmaster Google account. Contractors: use the Google account you gave the office.</p>'

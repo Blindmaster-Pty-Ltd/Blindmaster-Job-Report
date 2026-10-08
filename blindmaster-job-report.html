@@ -621,6 +621,7 @@
      wrapped text block with matching styling just for the snapshot. */
   .pdf-textarea-clone {
     display: none;
+    width: 100%;
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -1258,11 +1259,17 @@
     </div>
     <div class="field">
       <label for="incident">Any incident, injury, near miss or property damage on this job? <span class="req">*</span></label>
-      <select id="incident" onchange="updateIncidentPanel()">
-        <option value="">Select</option>
-        <option value="No">No</option>
-        <option value="Yes">Yes</option>
-      </select>
+      <input type="hidden" id="incident" value="">
+      <div class="status-toggle" role="group" aria-label="Any incident, injury, near miss or property damage on this job?">
+        <div class="status-option complete" id="incidentNo" role="button" tabindex="0" onclick="setIncident('No')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setIncident('No');}">
+          <span class="icon">&#10003;</span>
+          <span class="label">No</span>
+        </div>
+        <div class="status-option incomplete" id="incidentYes" role="button" tabindex="0" onclick="setIncident('Yes')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setIncident('Yes');}">
+          <span class="icon">!</span>
+          <span class="label">Yes</span>
+        </div>
+      </div>
     </div>
     <div id="incidentPanel" class="field">
       <label style="display:flex; align-items:center; justify-content:space-between;">
@@ -1311,8 +1318,25 @@
         <input type="text" id="customerName" placeholder="Name of the person signing">
       </div>
       <div class="check-list" style="margin-bottom:16px;">
-        <label class="check-item"><input type="checkbox" id="custAckShown"> I have been shown the finished installation.</label>
-        <label class="check-item"><input type="checkbox" id="custAckGuided"> I have been guided through how to operate the products.</label>
+        <label class="check-item"><input type="checkbox" id="custAck"> I have been shown the finished installation, and guided through how to operate the products.</label>
+      </div>
+      <div class="field">
+        <label>Are you satisfied with the finished installation? <span class="req">*</span></label>
+        <input type="hidden" id="custSatisfied" value="">
+        <div class="status-toggle" role="group" aria-label="Are you satisfied with the finished installation?">
+          <div class="status-option complete" id="custSatYes" role="button" tabindex="0" onclick="setCustSatisfied('Yes')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setCustSatisfied('Yes');}">
+            <span class="icon">&#10003;</span>
+            <span class="label">Yes</span>
+          </div>
+          <div class="status-option incomplete" id="custSatNo" role="button" tabindex="0" onclick="setCustSatisfied('No')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setCustSatisfied('No');}">
+            <span class="icon">!</span>
+            <span class="label">No</span>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="customerComments">Customer Comments / Notes / Issues</label>
+        <textarea id="customerComments" style="min-height:90px;" placeholder="Customer to note any comments, notes or issues here (optional)"></textarea>
       </div>
       <div class="field" style="margin-bottom:0;">
         <label>Customer Signature <span class="req">*</span></label>
@@ -1891,7 +1915,7 @@
   // ---- Control gear, remotes & sensors ----
   const CG_FIELDS = ['cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere',
     'cgBackItems', 'cgBackReason', 'cgBackNotes'];
-  const CG_CHECKS = ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent', 'custAckShown', 'custAckGuided', 'elecAck', 'forgotTap'];
+  const CG_CHECKS = ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent', 'custAck', 'elecAck', 'forgotTap'];
   let cgPhotos = []; // { name, dataUrl } — photos of where the gear was left
 
   function updateControlGear() {
@@ -1981,8 +2005,8 @@
   function validateCustomerSignoff(missing) {
     if (document.getElementById('clientAbsent').checked || isForgotTap()) return;
     if (!document.getElementById('customerName').value.trim()) missing.push('Customer sign-off — customer name');
-    if (!document.getElementById('custAckShown').checked) missing.push('Customer sign-off — shown the finished installation');
-    if (!document.getElementById('custAckGuided').checked) missing.push('Customer sign-off — guided through operating the products');
+    if (!document.getElementById('custSatisfied').value) missing.push('Customer sign-off — are you satisfied with the finished installation? (Yes / No)');
+    if (!document.getElementById('custAck').checked) missing.push('Customer sign-off — tick to confirm they were shown the finished installation and guided through operating the products');
     if (isSignaturePadEmpty()) missing.push('Customer sign-off — customer signature (or tick "The client was not on site")');
   }
 
@@ -2011,7 +2035,28 @@
   }
 
   function updateIncidentPanel() {
-    document.getElementById('incidentPanel').classList.toggle('show', document.getElementById('incident').value === 'Yes');
+    const v = document.getElementById('incident').value;
+    document.getElementById('incidentPanel').classList.toggle('show', v === 'Yes');
+    document.getElementById('incidentNo').classList.toggle('active', v === 'No');
+    document.getElementById('incidentYes').classList.toggle('active', v === 'Yes');
+  }
+
+  function updateCustSatisfied() {
+    const v = document.getElementById('custSatisfied').value;
+    document.getElementById('custSatYes').classList.toggle('active', v === 'Yes');
+    document.getElementById('custSatNo').classList.toggle('active', v === 'No');
+  }
+
+  function setCustSatisfied(v) {
+    document.getElementById('custSatisfied').value = v;
+    updateCustSatisfied();
+    scheduleDraftSave();
+  }
+
+  function setIncident(v) {
+    document.getElementById('incident').value = v;
+    updateIncidentPanel();
+    scheduleDraftSave();
   }
 
   function syncCheckStyles() {
@@ -2319,6 +2364,9 @@
       ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent'].forEach(id => { if (data[id]) document.getElementById(id).checked = data[id] === 'Yes'; });
       if (data.timesForgotten) document.getElementById('forgotTap').checked = data.timesForgotten === 'Yes';
       if (data.customerName) document.getElementById('customerName').value = data.customerName;
+      if (data.customerSatisfied) document.getElementById('custSatisfied').value = data.customerSatisfied;
+      if (data.customerComments) document.getElementById('customerComments').value = data.customerComments;
+      updateCustSatisfied();
       ELEC_FIELDS.forEach(id => { if (data[id]) document.getElementById(id).value = data[id]; });
       if (data.elecAck) document.getElementById('elecAck').checked = data.elecAck === 'Yes';
       updateElectrical();
@@ -2373,8 +2421,8 @@
       const clone = document.createElement('div');
       clone.className = 'pdf-textarea-clone';
       clone.textContent = textarea.value || '';
-      clone.style.width = textarea.offsetWidth + 'px';
-      clone.style.minHeight = textarea.offsetHeight + 'px';
+      clone.style.width = '100%';        // follow the card width, not the on-screen (phone) width
+      clone.style.minHeight = '90px';    // grows to fit all of the text
       textarea.insertAdjacentElement('afterend', clone);
       textareaClones.push(clone);
     });
@@ -2385,6 +2433,7 @@
     await new Promise(resolve => setTimeout(resolve, 100));
 
     let canvas;
+    let breakPointsPx = []; // where each card ends, so page breaks never cut through one
     try {
       canvas = await html2canvas(document.body, {
         scale: 2,
@@ -2392,7 +2441,12 @@
         backgroundColor: '#ffffff',
         scrollX: 0,
         scrollY: -window.scrollY,
-        windowWidth: 950
+        windowWidth: 950,
+        onclone: (clonedDoc) => {
+          const bodyTop = clonedDoc.body.getBoundingClientRect().top;
+          breakPointsPx = Array.from(clonedDoc.querySelectorAll('.header, .card'))
+            .map(el => (el.getBoundingClientRect().bottom - bodyTop) * 2); // 2 = html2canvas scale
+        }
       });
     } finally {
       document.body.classList.remove('capturing-for-pdf');
@@ -2414,7 +2468,14 @@
     let isFirstPage = true;
 
     while (renderedHeightPx < canvasHeightPx) {
-      const sliceHeightPx = Math.min(pageHeightPx, canvasHeightPx - renderedHeightPx);
+      let sliceHeightPx = Math.min(pageHeightPx, canvasHeightPx - renderedHeightPx);
+
+      // If more pages follow, end this page at the last card boundary that fits
+      if (renderedHeightPx + sliceHeightPx < canvasHeightPx) {
+        const limit = renderedHeightPx + pageHeightPx;
+        const fits = breakPointsPx.filter(b => b > renderedHeightPx + 50 && b <= limit);
+        if (fits.length) sliceHeightPx = Math.floor(fits[fits.length - 1] - renderedHeightPx);
+      }
 
       const pageCanvas = document.createElement('canvas');
       pageCanvas.width = canvasWidthPx;
@@ -2624,8 +2685,12 @@
       formData.append('clientAbsent', document.getElementById('clientAbsent').checked ? 'Yes' : 'No');
       formData.append('timesForgotten', isForgotTap() ? 'Yes' : 'No');
       formData.append('customerName', clientAbsent ? '' : document.getElementById('customerName').value.trim());
-      formData.append('custAckShown', !clientAbsent && document.getElementById('custAckShown').checked ? 'Yes' : 'No');
-      formData.append('custAckGuided', !clientAbsent && document.getElementById('custAckGuided').checked ? 'Yes' : 'No');
+      const custAckYesNo = !clientAbsent && document.getElementById('custAck').checked ? 'Yes' : 'No';
+      formData.append('custAck', custAckYesNo);
+      formData.append('custAckShown', custAckYesNo);   // kept so the existing Apps Script still gets these
+      formData.append('custAckGuided', custAckYesNo);
+      formData.append('customerSatisfied', clientAbsent ? '' : document.getElementById('custSatisfied').value);
+      formData.append('customerComments', clientAbsent ? '' : document.getElementById('customerComments').value.trim());
       formData.append('customerSigned', !clientAbsent && !isSignaturePadEmpty() ? 'Yes' : 'No');
 
       let mediaPayload;
@@ -2705,7 +2770,7 @@
     'startTime', 'finishTime', 'tasksDone', 'remainingWork', 'timeRequired', 'menRequired', 'signoffDate',
     'incident', 'incidentDetails',
     'cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere', 'cgBackItems', 'cgBackReason', 'cgBackNotes',
-    'customerName', 'manualStart', 'manualFinish', 'breakMins',
+    'customerName', 'custSatisfied', 'customerComments', 'manualStart', 'manualFinish', 'breakMins',
     'elecInvolved', 'elecStatus', 'elecContractor', 'elecContractorOther', 'elecNotes'];
 
   let draftSavingEnabled = false;
@@ -2752,6 +2817,7 @@
     SAFETY_CHECKS.concat(CG_CHECKS).forEach(id => { if (draft.checks && draft.checks[id] !== undefined) document.getElementById(id).checked = !!draft.checks[id]; });
     if (draft.clock) clockData = draft.clock;
     updateIncidentPanel();
+    updateCustSatisfied();
     updateElectrical();
     updateCustomerSignoff();
     syncCheckStyles();

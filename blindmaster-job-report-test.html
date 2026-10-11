@@ -662,6 +662,10 @@
 
   /* Safety & site checks */
   .check-list { display: flex; flex-direction: column; gap: 10px; }
+  .check-list.cg-pair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .cg-pair-q { margin: 0 0 8px; font-weight: 700; }
+  .check-list.cg-pair label.check-item { flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 12px 4px; gap: 8px; font-size: 14px; min-width: 0; }
+  select.time-select { width: 100%; }
   label.check-item {
     display: flex;
     align-items: flex-start;
@@ -978,17 +982,17 @@
       <div class="grid">
         <div class="field">
           <label for="manualStart">Start Time <span class="req">*</span></label>
-          <input type="time" id="manualStart" onchange="syncTimes()" oninput="syncTimes()">
+          <select id="manualStart" class="time-select" onchange="syncTimes()"></select>
         </div>
         <div class="field">
           <label for="manualFinish">Finish Time <span class="req">*</span></label>
-          <input type="time" id="manualFinish" onchange="syncTimes()" oninput="syncTimes()">
+          <select id="manualFinish" class="time-select" onchange="syncTimes()"></select>
         </div>
       </div>
     </div>
 
     <div class="check-list" style="margin-top:12px;">
-      <label class="check-item"><input type="checkbox" id="forgotTap" onchange="updateCustomerSignoff()"> I forgot to tap Start / Finish — enter the times by hand</label>
+      <label class="check-item"><input type="checkbox" id="forgotTap" onchange="updateCustomerSignoff()"> I forgot to tap Start / Finish — choose the times from a list</label>
     </div>
 
     <div class="grid" style="margin-top:16px;">
@@ -1187,9 +1191,11 @@
 
     <div id="cgPanel" style="display:none;">
       <div class="cg-locked-note" id="cgLockedNote">The client wasn't on site (see Sign-Off), so control gear can't be left on site — take it back to the warehouse.</div>
-      <div class="check-list" style="margin-bottom:14px;">
-        <label class="check-item"><input type="checkbox" id="cgLeftOnSite" onchange="updateControlGear()"> Some or all was left on site</label>
-        <label class="check-item"><input type="checkbox" id="cgTakenBack" onchange="updateControlGear()"> Some or all was taken back to the warehouse</label>
+      <p class="cg-pair-q">Where is the control gear now? (tick all that apply)</p>
+      <div class="check-list cg-pair" style="margin-bottom:14px;">
+        <label class="check-item"><input type="checkbox" id="cgLeftOnSite" onchange="updateControlGear()"> Site</label>
+        <label class="check-item"><input type="checkbox" id="cgTakenBack" onchange="updateControlGear()"> Warehouse</label>
+        <label class="check-item"><input type="checkbox" id="cgInVehicle" onchange="updateControlGear()"> Vehicle</label>
       </div>
 
       <div id="cgLeftPanel" class="cg-sub" style="display:none;">
@@ -1231,7 +1237,7 @@
       </div>
 
       <div id="cgBackPanel" class="cg-sub" style="display:none;">
-        <div class="cg-sub-title">Taken back to the warehouse</div>
+        <div class="cg-sub-title">At the warehouse</div>
         <div class="field">
           <label for="cgBackItems">What Was Taken Back <span class="req">*</span></label>
           <textarea id="cgBackItems" style="min-height:70px;" placeholder="e.g. 3 x single-channel remotes, 1 x sun sensor"></textarea>
@@ -1251,6 +1257,46 @@
           <textarea id="cgBackNotes" style="min-height:60px;" placeholder="Anything the office needs to know"></textarea>
         </div>
       </div>
+      <div id="cgVehPanel" class="cg-sub" style="display:none;">
+        <div class="cg-sub-title">In a vehicle</div>
+        <div class="field">
+          <label for="cgVehicle">Which Vehicle <span class="req">*</span></label>
+          <select id="cgVehicle" onchange="updateControlGear()">
+            <option value="">Select</option>
+            <option value="Lewis – Toyota Hiace">Lewis – Toyota Hiace</option>
+            <option value="Mark – Ford Ranger">Mark – Ford Ranger</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field" id="cgVehicleOtherField" style="display:none;">
+          <label for="cgVehicleOther">Other Vehicle <span class="req">*</span></label>
+          <select id="cgVehicleOther" onchange="updateControlGear()">
+            <option value="">Select</option>
+            <option value="Troy – Toyota Troopy">Troy – Toyota Troopy</option>
+            <option value="Andrew – Toyota Fortuner">Andrew – Toyota Fortuner</option>
+            <option value="Simon – Volvo">Simon – Volvo</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cgVehItems">What's In The Vehicle <span class="req">*</span></label>
+          <textarea id="cgVehItems" style="min-height:70px;" placeholder="e.g. 2 x remotes, 1 x wind sensor"></textarea>
+        </div>
+        <div class="field">
+          <label for="cgVehReason">To Be Delivered <span class="req">*</span></label>
+          <select id="cgVehReason" onchange="updateControlGear()">
+            <option value="">Select</option>
+            <option value="After the invoice is paid">After the invoice is paid</option>
+            <option value="At the next visit">At the next visit</option>
+            <option value="Dropping it back to the warehouse">Dropping it back to the warehouse</option>
+            <option value="Other">Other (explain below)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cgVehNotes">Notes <span class="req" id="cgVehNotesReq" style="display:none;">*</span></label>
+          <textarea id="cgVehNotes" style="min-height:60px;" placeholder="Anything the office needs to know"></textarea>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1786,6 +1832,37 @@
     return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
   }
 
+  // Hand-entered times: a list from 6:00am to 6:00pm in 15-minute steps.
+  function fillTimeSelects() {
+    ['manualStart', 'manualFinish'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel || sel.options.length) return;
+      sel.appendChild(new Option('Choose a time', ''));
+      for (let m = 6 * 60; m <= 18 * 60; m += 15) {
+        const hh = String(Math.floor(m / 60)).padStart(2, '0'), mm = String(m % 60).padStart(2, '0');
+        const h12 = ((Math.floor(m / 60) + 11) % 12) + 1, ap = m < 12 * 60 ? 'am' : 'pm';
+        sel.appendChild(new Option(h12 + ':' + mm + ' ' + ap, hh + ':' + mm));
+      }
+    });
+  }
+  // Sets a time list's value, adding the exact time if it isn't on the 15-minute list (e.g. from the Start button).
+  function setTimeValue(id, v) {
+    fillTimeSelects();
+    const sel = document.getElementById(id);
+    if (!sel || !v) return;
+    v = String(v).slice(0, 5);
+    if (![].some.call(sel.options, o => o.value === v)) {
+      const m = Number(v.slice(0, 2)) * 60 + Number(v.slice(3, 5));
+      const h12 = ((Math.floor(m / 60) + 11) % 12) + 1, ap = m < 12 * 60 ? 'am' : 'pm';
+      const opt = new Option(h12 + ':' + v.slice(3, 5) + ' ' + ap, v);
+      const after = [].find.call(sel.options, o => o.value && o.value > v);
+      sel.insertBefore(opt, after || null);
+    }
+    sel.value = v;
+  }
+  document.addEventListener('DOMContentLoaded', fillTimeSelects);
+  fillTimeSelects();
+
   function isClientAbsent() {
     const el = document.getElementById('clientAbsent');
     return !!(el && el.checked);
@@ -1841,14 +1918,14 @@
     el('clockPanel').style.display = manual ? 'none' : 'block';
     el('manualNote').textContent = isClientAbsent()
       ? 'The client was not on site (see Sign-Off), so enter your start and finish times by hand.'
-      : 'Enter the times you arrived on site and left. As this report is being done after leaving site, the customer sign-off isn\'t needed.';
+      : 'Choose the times you arrived on site and left. The customer still signs off below.';
     el('manualTimesPanel').style.display = manual ? 'block' : 'none';
 
     if (manual) {
       // On switching to manual, carry over any button times already recorded
       if (switchingToManual) {
-        if (!el('manualStart').value && clockData.start) el('manualStart').value = clockData.start.time;
-        if (!el('manualFinish').value && clockData.finish) el('manualFinish').value = clockData.finish.time;
+        if (!el('manualStart').value && clockData.start) setTimeValue('manualStart', clockData.start.time);
+        if (!el('manualFinish').value && clockData.finish) setTimeValue('manualFinish', clockData.finish.time);
       }
       el('startTime').value = el('manualStart').value;
       el('finishTime').value = el('manualFinish').value;
@@ -1942,8 +2019,8 @@
 
   // ---- Control gear, remotes & sensors ----
   const CG_FIELDS = ['cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere',
-    'cgBackItems', 'cgBackReason', 'cgBackNotes'];
-  const CG_CHECKS = ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent', 'custAckShown', 'custAckGuided', 'elecAck', 'forgotTap', 'customerToldReturn'];
+    'cgBackItems', 'cgBackReason', 'cgBackNotes', 'cgVehicle', 'cgVehicleOther', 'cgVehItems', 'cgVehReason', 'cgVehNotes'];
+  const CG_CHECKS = ['cgLeftOnSite', 'cgTakenBack', 'cgInVehicle', 'clientAbsent', 'custAckShown', 'custAckGuided', 'elecAck', 'forgotTap', 'customerToldReturn'];
   let cgPhotos = []; // { name, dataUrl } — photos of where the gear was left
 
   function updateControlGear() {
@@ -1957,6 +2034,9 @@
     el('cgPanel').style.display = supplied ? 'block' : 'none';
     el('cgLeftPanel').style.display = supplied && el('cgLeftOnSite').checked ? 'block' : 'none';
     el('cgBackPanel').style.display = supplied && el('cgTakenBack').checked ? 'block' : 'none';
+    el('cgVehPanel').style.display = supplied && el('cgInVehicle').checked ? 'block' : 'none';
+    el('cgVehicleOtherField').style.display = el('cgVehicle').value === 'Other' ? 'block' : 'none';
+    el('cgVehNotesReq').style.display = el('cgVehReason').value === 'Other' ? 'inline' : 'none';
 
     const leftWith = el('cgLeftWith').value;
     el('cgLeftWithNameField').style.display = leftWith && leftWith.indexOf('Nobody') !== 0 ? 'block' : 'none';
@@ -2020,7 +2100,7 @@
 
   function updateCustomerSignoff() {
     const absent = document.getElementById('clientAbsent').checked;
-    const afterLeaving = !absent && isForgotTap();
+    const afterLeaving = false; // forgetting to tap Start is the installer's slip: the customer still signs off
     document.getElementById('customerSignoff').classList.toggle('is-hidden', absent || afterLeaving);
     document.getElementById('afterLeavingNote').style.display = afterLeaving ? 'block' : 'none';
     syncTimes();
@@ -2031,7 +2111,7 @@
   }
 
   function validateCustomerSignoff(missing) {
-    if (document.getElementById('clientAbsent').checked || isForgotTap()) return;
+    if (document.getElementById('clientAbsent').checked) return;
     if (!document.getElementById('customerName').value.trim()) missing.push('Customer sign-off — customer name');
     if (!document.getElementById('custAckShown').checked) missing.push('Customer sign-off — shown the finished installation');
     if (!document.getElementById('custAckGuided').checked) missing.push('Customer sign-off — guided through operating the products');
@@ -2045,7 +2125,15 @@
     if (supplied !== 'Yes') return;
     const left = document.getElementById('cgLeftOnSite').checked;
     const back = document.getElementById('cgTakenBack').checked;
-    if (!left && !back) missing.push('Control gear — left on site, or taken back to the warehouse?');
+    const veh = document.getElementById('cgInVehicle').checked;
+    if (!left && !back && !veh) missing.push('Control gear — tick where it is now: Site, Warehouse or Vehicle');
+    if (veh) {
+      if (!val('cgVehicle')) missing.push('Control gear — which vehicle it\'s in');
+      else if (val('cgVehicle') === 'Other' && !val('cgVehicleOther')) missing.push('Control gear — which other vehicle it\'s in');
+      if (!val('cgVehItems')) missing.push('Control gear — what\'s in the vehicle');
+      if (!val('cgVehReason')) missing.push('Control gear — when the vehicle\'s items will be delivered');
+      if (val('cgVehReason') === 'Other' && !val('cgVehNotes')) missing.push('Control gear — notes explaining the vehicle delivery');
+    }
     if (left && document.getElementById('clientAbsent').checked) {
       missing.push('Control gear — the client wasn\'t on site, so it can\'t be left on site');
     }
@@ -2477,8 +2565,8 @@
 
       if (data.breakMins) document.getElementById('breakMins').value = data.breakMins;
       if (data.timeSource === 'manual') {
-        if (data.startTime) document.getElementById('manualStart').value = data.startTime;
-        if (data.finishTime) document.getElementById('manualFinish').value = data.finishTime;
+        if (data.startTime) setTimeValue('manualStart', data.startTime);
+        if (data.finishTime) setTimeValue('manualFinish', data.finishTime);
       } else {
         clockData = {
           start: data.startTime ? { time: data.startTime, at: data.clockStartAt || '' } : null,
@@ -2540,7 +2628,7 @@
       SAFETY_CHECKS.forEach(id => { if (data[id]) document.getElementById(id).checked = data[id] === 'Yes'; });
       updateIncidentPanel();
       CG_FIELDS.forEach(id => { if (data[id]) document.getElementById(id).value = data[id]; });
-      ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent'].forEach(id => { if (data[id]) document.getElementById(id).checked = data[id] === 'Yes'; });
+      ['cgLeftOnSite', 'cgTakenBack', 'cgInVehicle', 'clientAbsent'].forEach(id => { if (data[id]) document.getElementById(id).checked = data[id] === 'Yes'; });
       if (data.timesForgotten) document.getElementById('forgotTap').checked = data.timesForgotten === 'Yes';
       if (data.customerName) document.getElementById('customerName').value = data.customerName;
       ELEC_FIELDS.forEach(id => { if (data[id]) document.getElementById(id).value = data[id]; });
@@ -2849,11 +2937,12 @@
       formData.append('incidentDetails', document.getElementById('incidentDetails').value.trim());
       SAFETY_CHECKS.forEach(id => formData.append(id, document.getElementById(id).checked ? 'Yes' : 'No'));
       CG_FIELDS.forEach(id => formData.append(id, document.getElementById(id).value.trim()));
-      ['cgLeftOnSite', 'cgTakenBack'].forEach(id => formData.append(id, document.getElementById(id).checked ? 'Yes' : 'No'));
+      ['cgLeftOnSite', 'cgTakenBack', 'cgInVehicle'].forEach(id => formData.append(id, document.getElementById(id).checked ? 'Yes' : 'No'));
+      formData.append('cgVehicleName', document.getElementById('cgVehicle').value === 'Other' ? document.getElementById('cgVehicleOther').value : document.getElementById('cgVehicle').value);
       ELEC_FIELDS.forEach(id => formData.append(id, document.getElementById(id).value.trim()));
       formData.append('elecAck', document.getElementById('elecAck').checked ? 'Yes' : 'No');
       formData.append('cgPhotoCount', String(cgPhotos.length));
-      const noSignoff = document.getElementById('clientAbsent').checked || isForgotTap();
+      const noSignoff = document.getElementById('clientAbsent').checked;
       const clientAbsent = noSignoff;
       formData.append('clientAbsent', document.getElementById('clientAbsent').checked ? 'Yes' : 'No');
       formData.append('timesForgotten', isForgotTap() ? 'Yes' : 'No');
@@ -2938,7 +3027,7 @@
   const DRAFT_FIELDS = ['clientName', 'jobRef', 'siteAddress', 'jobDate', 'projectManager', 'calEventId', 'calId',
     'startTime', 'finishTime', 'tasksDone', 'remainingWork', 'timeRequired', 'menRequired', 'signoffDate',
     'incident', 'incidentDetails',
-    'cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere', 'cgBackItems', 'cgBackReason', 'cgBackNotes',
+    'cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere', 'cgBackItems', 'cgBackReason', 'cgBackNotes', 'cgVehicle', 'cgVehicleOther', 'cgVehItems', 'cgVehReason', 'cgVehNotes',
     'customerName', 'manualStart', 'manualFinish', 'breakMins',
     'elecInvolved', 'elecStatus', 'elecContractor', 'elecContractorOther', 'elecNotes',
     'weatherWhat', 'weatherRecord'];
@@ -2974,7 +3063,10 @@
     draftSavingEnabled = false;
 
     DRAFT_FIELDS.forEach(id => {
-      if (draft.fields && draft.fields[id] !== undefined) document.getElementById(id).value = draft.fields[id];
+      if (draft.fields && draft.fields[id] !== undefined) {
+        if (id === 'manualStart' || id === 'manualFinish') setTimeValue(id, draft.fields[id]);
+        else document.getElementById(id).value = draft.fields[id];
+      }
     });
 
     Object.keys(individualTimesData).forEach(k => delete individualTimesData[k]);

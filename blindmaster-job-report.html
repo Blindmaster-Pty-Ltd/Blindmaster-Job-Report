@@ -368,6 +368,30 @@
 
   #remaining-work-panel.show { display: block; }
 
+  /* Job not finished: reasons, weather, return visit */
+  .nf-label { display: block; font-size: 12px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+  .nf-sub { font-size: 12.5px; color: var(--grey); margin-bottom: 10px; }
+  .reason-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .reason-chip { min-height: 44px; padding: 0 14px; border: 1.5px solid var(--grey-line); border-radius: 22px; background: var(--white); color: var(--ink); font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+  .reason-chip[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--white); }
+  .weather-card { display: none; border: 1.5px solid var(--grey-line); border-left: 4px solid var(--amber); border-radius: 8px; background: var(--amber-pale); padding: 14px 16px; margin-bottom: 18px; }
+  .weather-card.show { display: block; }
+  .weather-card .wc-title { font-weight: 800; color: var(--navy); font-size: 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .weather-card dl { margin: 0 0 12px; display: grid; grid-template-columns: 96px 1fr; row-gap: 5px; column-gap: 10px; font-size: 13px; }
+  .weather-card dt { color: var(--grey); }
+  .weather-card dd { margin: 0; font-weight: 600; color: var(--ink); }
+  .weather-card .wc-status { font-size: 12.5px; color: var(--grey); margin-bottom: 10px; }
+  .wc-refresh { border: 1px solid var(--navy); background: var(--white); color: var(--navy); border-radius: 6px; padding: 6px 10px; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .nf-photo-btn { width: 100%; min-height: 48px; margin: 4px 0 6px; border: 2px solid var(--navy); border-radius: 8px; background: var(--white); color: var(--navy); font-family: inherit; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+  .nf-photo-count { font-size: 12.5px; color: var(--grey); margin-bottom: 14px; }
+  .nf-summary { margin-top: 16px; border: 1px solid var(--grey-line); border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.5; color: var(--ink); background: var(--white); }
+  .nf-summary b { color: var(--navy); }
+  body.capturing-for-pdf .wc-refresh, body.capturing-for-pdf .nf-photo-btn, body.capturing-for-pdf .nf-summary, body.capturing-for-pdf .reason-chip[aria-pressed="false"] { display: none !important; }
+  .test-bar { background: #7A1F1F; color: #fff; font-size: 13px; font-weight: 700; padding: 10px 16px; text-align: center; }
+  .test-setup { background: var(--white); border: 2px solid #7A1F1F; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 13px; }
+  .test-setup input { width: 100%; margin: 8px 0; padding: 10px; font-size: 14px; border: 1px solid var(--grey-line); border-radius: 6px; }
+  .test-setup button { padding: 10px 14px; border: 0; border-radius: 6px; background: var(--navy); color: #fff; font-weight: 700; font-family: inherit; cursor: pointer; }
+
   /* Media capture */
   .media-tabs {
     display: flex;
@@ -621,7 +645,6 @@
      wrapped text block with matching styling just for the snapshot. */
   .pdf-textarea-clone {
     display: none;
-    width: 100%;
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -639,6 +662,10 @@
 
   /* Safety & site checks */
   .check-list { display: flex; flex-direction: column; gap: 10px; }
+  .check-list.cg-pair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .cg-pair-q { margin: 0 0 8px; font-weight: 700; }
+  .check-list.cg-pair label.check-item { flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 12px 4px; gap: 8px; font-size: 14px; min-width: 0; }
+  select.time-select { width: 100%; }
   label.check-item {
     display: flex;
     align-items: flex-start;
@@ -955,17 +982,17 @@
       <div class="grid">
         <div class="field">
           <label for="manualStart">Start Time <span class="req">*</span></label>
-          <input type="time" id="manualStart" onchange="syncTimes()" oninput="syncTimes()">
+          <select id="manualStart" class="time-select" onchange="syncTimes()"></select>
         </div>
         <div class="field">
           <label for="manualFinish">Finish Time <span class="req">*</span></label>
-          <input type="time" id="manualFinish" onchange="syncTimes()" oninput="syncTimes()">
+          <select id="manualFinish" class="time-select" onchange="syncTimes()"></select>
         </div>
       </div>
     </div>
 
     <div class="check-list" style="margin-top:12px;">
-      <label class="check-item"><input type="checkbox" id="forgotTap" onchange="updateCustomerSignoff()"> I forgot to tap Start / Finish — enter the times by hand</label>
+      <label class="check-item"><input type="checkbox" id="forgotTap" onchange="updateCustomerSignoff()"> I forgot to tap Start / Finish — choose the times from a list</label>
     </div>
 
     <div class="grid" style="margin-top:16px;">
@@ -1035,6 +1062,27 @@
     </div>
 
     <div id="remaining-work-panel">
+      <span class="nf-label">Why couldn't it be finished? <span class="req">*</span></span>
+      <div class="nf-sub">Choose all that apply.</div>
+      <div class="reason-chips" id="reasonChips" role="group" aria-label="Why the job couldn't be finished"></div>
+
+      <div class="weather-card" id="weatherCard" aria-live="polite">
+        <div class="wc-title"><span>Weather on site, attached automatically</span><button type="button" class="wc-refresh" onclick="fetchSiteWeather(true)">Refresh</button></div>
+        <div class="wc-status" id="weatherStatus">Getting the weather for this site…</div>
+        <dl id="weatherFacts"></dl>
+        <input type="hidden" id="weatherRecord">
+        <div class="field" style="margin-bottom:6px;">
+          <label for="weatherWhat">What happened? <span class="req">*</span></label>
+          <select id="weatherWhat" onchange="updateIncompleteSummary(); scheduleDraftSave();">
+            <option value="">Select</option>
+            <option value="Too windy to extend or tension the awning safely">Too windy to extend or tension the awning safely</option>
+            <option value="Rain stopped work">Rain stopped work</option>
+            <option value="Storm or lightning: left site">Storm or lightning: left site</option>
+            <option value="Heat: unsafe to work on the roof or deck">Heat: unsafe to work on the roof or deck</option>
+          </select>
+        </div>
+      </div>
+
       <div class="field">
         <label style="display:flex; align-items:center; justify-content:space-between;">
           <span>Outstanding Work / What Remains to Be Done <span class="req" id="reqRemainingWork" style="display:none;">*</span></span>
@@ -1061,6 +1109,13 @@
           </select>
         </div>
       </div>
+
+      <button type="button" class="nf-photo-btn" onclick="document.getElementById('photoInput').click()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Add photos of where you got to</button>
+      <div class="nf-photo-count" id="nfPhotoCount">They're saved with the report's photos (Site Collateral).</div>
+
+      <label class="check-item" for="customerToldReturn"><input type="checkbox" id="customerToldReturn" onchange="updateIncompleteSummary(); scheduleDraftSave();">Customer told about the return visit</label>
+
+      <div class="nf-summary" id="nfSummary"></div>
     </div>
   </div>
 
@@ -1136,9 +1191,11 @@
 
     <div id="cgPanel" style="display:none;">
       <div class="cg-locked-note" id="cgLockedNote">The client wasn't on site (see Sign-Off), so control gear can't be left on site — take it back to the warehouse.</div>
-      <div class="check-list" style="margin-bottom:14px;">
-        <label class="check-item"><input type="checkbox" id="cgLeftOnSite" onchange="updateControlGear()"> Some or all was left on site</label>
-        <label class="check-item"><input type="checkbox" id="cgTakenBack" onchange="updateControlGear()"> Some or all was taken back to the warehouse</label>
+      <p class="cg-pair-q">Where is the control gear now? (tick all that apply)</p>
+      <div class="check-list cg-pair" style="margin-bottom:14px;">
+        <label class="check-item"><input type="checkbox" id="cgLeftOnSite" onchange="updateControlGear()"> Site</label>
+        <label class="check-item"><input type="checkbox" id="cgTakenBack" onchange="updateControlGear()"> Warehouse</label>
+        <label class="check-item"><input type="checkbox" id="cgInVehicle" onchange="updateControlGear()"> Vehicle</label>
       </div>
 
       <div id="cgLeftPanel" class="cg-sub" style="display:none;">
@@ -1180,7 +1237,7 @@
       </div>
 
       <div id="cgBackPanel" class="cg-sub" style="display:none;">
-        <div class="cg-sub-title">Taken back to the warehouse</div>
+        <div class="cg-sub-title">At the warehouse</div>
         <div class="field">
           <label for="cgBackItems">What Was Taken Back <span class="req">*</span></label>
           <textarea id="cgBackItems" style="min-height:70px;" placeholder="e.g. 3 x single-channel remotes, 1 x sun sensor"></textarea>
@@ -1200,6 +1257,46 @@
           <textarea id="cgBackNotes" style="min-height:60px;" placeholder="Anything the office needs to know"></textarea>
         </div>
       </div>
+      <div id="cgVehPanel" class="cg-sub" style="display:none;">
+        <div class="cg-sub-title">In a vehicle</div>
+        <div class="field">
+          <label for="cgVehicle">Which Vehicle <span class="req">*</span></label>
+          <select id="cgVehicle" onchange="updateControlGear()">
+            <option value="">Select</option>
+            <option value="Lewis – Toyota Hiace">Lewis – Toyota Hiace</option>
+            <option value="Mark – Ford Ranger">Mark – Ford Ranger</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field" id="cgVehicleOtherField" style="display:none;">
+          <label for="cgVehicleOther">Other Vehicle <span class="req">*</span></label>
+          <select id="cgVehicleOther" onchange="updateControlGear()">
+            <option value="">Select</option>
+            <option value="Troy – Toyota Troopy">Troy – Toyota Troopy</option>
+            <option value="Andrew – Toyota Fortuner">Andrew – Toyota Fortuner</option>
+            <option value="Simon – Volvo">Simon – Volvo</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cgVehItems">What's In The Vehicle <span class="req">*</span></label>
+          <textarea id="cgVehItems" style="min-height:70px;" placeholder="e.g. 2 x remotes, 1 x wind sensor"></textarea>
+        </div>
+        <div class="field">
+          <label for="cgVehReason">To Be Delivered <span class="req">*</span></label>
+          <select id="cgVehReason" onchange="updateControlGear()">
+            <option value="">Select</option>
+            <option value="After the invoice is paid">After the invoice is paid</option>
+            <option value="At the next visit">At the next visit</option>
+            <option value="Dropping it back to the warehouse">Dropping it back to the warehouse</option>
+            <option value="Other">Other (explain below)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cgVehNotes">Notes <span class="req" id="cgVehNotesReq" style="display:none;">*</span></label>
+          <textarea id="cgVehNotes" style="min-height:60px;" placeholder="Anything the office needs to know"></textarea>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1259,17 +1356,11 @@
     </div>
     <div class="field">
       <label for="incident">Any incident, injury, near miss or property damage on this job? <span class="req">*</span></label>
-      <input type="hidden" id="incident" value="">
-      <div class="status-toggle" role="group" aria-label="Any incident, injury, near miss or property damage on this job?">
-        <div class="status-option complete" id="incidentNo" role="button" tabindex="0" onclick="setIncident('No')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setIncident('No');}">
-          <span class="icon">&#10003;</span>
-          <span class="label">No</span>
-        </div>
-        <div class="status-option incomplete" id="incidentYes" role="button" tabindex="0" onclick="setIncident('Yes')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setIncident('Yes');}">
-          <span class="icon">!</span>
-          <span class="label">Yes</span>
-        </div>
-      </div>
+      <select id="incident" onchange="updateIncidentPanel()">
+        <option value="">Select</option>
+        <option value="No">No</option>
+        <option value="Yes">Yes</option>
+      </select>
     </div>
     <div id="incidentPanel" class="field">
       <label style="display:flex; align-items:center; justify-content:space-between;">
@@ -1318,25 +1409,8 @@
         <input type="text" id="customerName" placeholder="Name of the person signing">
       </div>
       <div class="check-list" style="margin-bottom:16px;">
-        <label class="check-item"><input type="checkbox" id="custAck"> I have been shown the finished installation, and guided through how to operate the products.</label>
-      </div>
-      <div class="field">
-        <label>Are you satisfied with the finished installation? <span class="req">*</span></label>
-        <input type="hidden" id="custSatisfied" value="">
-        <div class="status-toggle" role="group" aria-label="Are you satisfied with the finished installation?">
-          <div class="status-option complete" id="custSatYes" role="button" tabindex="0" onclick="setCustSatisfied('Yes')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setCustSatisfied('Yes');}">
-            <span class="icon">&#10003;</span>
-            <span class="label">Yes</span>
-          </div>
-          <div class="status-option incomplete" id="custSatNo" role="button" tabindex="0" onclick="setCustSatisfied('No')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setCustSatisfied('No');}">
-            <span class="icon">!</span>
-            <span class="label">No</span>
-          </div>
-        </div>
-      </div>
-      <div class="field">
-        <label for="customerComments">Customer Comments / Notes / Issues</label>
-        <textarea id="customerComments" style="min-height:90px;" placeholder="Customer to note any comments, notes or issues here (optional)"></textarea>
+        <label class="check-item"><input type="checkbox" id="custAckShown"> I have been shown the finished installation.</label>
+        <label class="check-item"><input type="checkbox" id="custAckGuided"> I have been guided through how to operate the products.</label>
       </div>
       <div class="field" style="margin-bottom:0;">
         <label>Customer Signature <span class="req">*</span></label>
@@ -1758,6 +1832,37 @@
     return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
   }
 
+  // Hand-entered times: a list from 6:00am to 6:00pm in 15-minute steps.
+  function fillTimeSelects() {
+    ['manualStart', 'manualFinish'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel || sel.options.length) return;
+      sel.appendChild(new Option('Choose a time', ''));
+      for (let m = 6 * 60; m <= 18 * 60; m += 15) {
+        const hh = String(Math.floor(m / 60)).padStart(2, '0'), mm = String(m % 60).padStart(2, '0');
+        const h12 = ((Math.floor(m / 60) + 11) % 12) + 1, ap = m < 12 * 60 ? 'am' : 'pm';
+        sel.appendChild(new Option(h12 + ':' + mm + ' ' + ap, hh + ':' + mm));
+      }
+    });
+  }
+  // Sets a time list's value, adding the exact time if it isn't on the 15-minute list (e.g. from the Start button).
+  function setTimeValue(id, v) {
+    fillTimeSelects();
+    const sel = document.getElementById(id);
+    if (!sel || !v) return;
+    v = String(v).slice(0, 5);
+    if (![].some.call(sel.options, o => o.value === v)) {
+      const m = Number(v.slice(0, 2)) * 60 + Number(v.slice(3, 5));
+      const h12 = ((Math.floor(m / 60) + 11) % 12) + 1, ap = m < 12 * 60 ? 'am' : 'pm';
+      const opt = new Option(h12 + ':' + v.slice(3, 5) + ' ' + ap, v);
+      const after = [].find.call(sel.options, o => o.value && o.value > v);
+      sel.insertBefore(opt, after || null);
+    }
+    sel.value = v;
+  }
+  document.addEventListener('DOMContentLoaded', fillTimeSelects);
+  fillTimeSelects();
+
   function isClientAbsent() {
     const el = document.getElementById('clientAbsent');
     return !!(el && el.checked);
@@ -1813,14 +1918,14 @@
     el('clockPanel').style.display = manual ? 'none' : 'block';
     el('manualNote').textContent = isClientAbsent()
       ? 'The client was not on site (see Sign-Off), so enter your start and finish times by hand.'
-      : 'Enter the times you arrived on site and left. As this report is being done after leaving site, the customer sign-off isn\'t needed.';
+      : 'Choose the times you arrived on site and left. The customer still signs off below.';
     el('manualTimesPanel').style.display = manual ? 'block' : 'none';
 
     if (manual) {
       // On switching to manual, carry over any button times already recorded
       if (switchingToManual) {
-        if (!el('manualStart').value && clockData.start) el('manualStart').value = clockData.start.time;
-        if (!el('manualFinish').value && clockData.finish) el('manualFinish').value = clockData.finish.time;
+        if (!el('manualStart').value && clockData.start) setTimeValue('manualStart', clockData.start.time);
+        if (!el('manualFinish').value && clockData.finish) setTimeValue('manualFinish', clockData.finish.time);
       }
       el('startTime').value = el('manualStart').value;
       el('finishTime').value = el('manualFinish').value;
@@ -1914,8 +2019,8 @@
 
   // ---- Control gear, remotes & sensors ----
   const CG_FIELDS = ['cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere',
-    'cgBackItems', 'cgBackReason', 'cgBackNotes'];
-  const CG_CHECKS = ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent', 'custAck', 'elecAck', 'forgotTap'];
+    'cgBackItems', 'cgBackReason', 'cgBackNotes', 'cgVehicle', 'cgVehicleOther', 'cgVehItems', 'cgVehReason', 'cgVehNotes'];
+  const CG_CHECKS = ['cgLeftOnSite', 'cgTakenBack', 'cgInVehicle', 'clientAbsent', 'custAckShown', 'custAckGuided', 'elecAck', 'forgotTap', 'customerToldReturn'];
   let cgPhotos = []; // { name, dataUrl } — photos of where the gear was left
 
   function updateControlGear() {
@@ -1929,6 +2034,9 @@
     el('cgPanel').style.display = supplied ? 'block' : 'none';
     el('cgLeftPanel').style.display = supplied && el('cgLeftOnSite').checked ? 'block' : 'none';
     el('cgBackPanel').style.display = supplied && el('cgTakenBack').checked ? 'block' : 'none';
+    el('cgVehPanel').style.display = supplied && el('cgInVehicle').checked ? 'block' : 'none';
+    el('cgVehicleOtherField').style.display = el('cgVehicle').value === 'Other' ? 'block' : 'none';
+    el('cgVehNotesReq').style.display = el('cgVehReason').value === 'Other' ? 'inline' : 'none';
 
     const leftWith = el('cgLeftWith').value;
     el('cgLeftWithNameField').style.display = leftWith && leftWith.indexOf('Nobody') !== 0 ? 'block' : 'none';
@@ -1992,7 +2100,7 @@
 
   function updateCustomerSignoff() {
     const absent = document.getElementById('clientAbsent').checked;
-    const afterLeaving = !absent && isForgotTap();
+    const afterLeaving = false; // forgetting to tap Start is the installer's slip: the customer still signs off
     document.getElementById('customerSignoff').classList.toggle('is-hidden', absent || afterLeaving);
     document.getElementById('afterLeavingNote').style.display = afterLeaving ? 'block' : 'none';
     syncTimes();
@@ -2003,10 +2111,10 @@
   }
 
   function validateCustomerSignoff(missing) {
-    if (document.getElementById('clientAbsent').checked || isForgotTap()) return;
+    if (document.getElementById('clientAbsent').checked) return;
     if (!document.getElementById('customerName').value.trim()) missing.push('Customer sign-off — customer name');
-    if (!document.getElementById('custSatisfied').value) missing.push('Customer sign-off — are you satisfied with the finished installation? (Yes / No)');
-    if (!document.getElementById('custAck').checked) missing.push('Customer sign-off — tick to confirm they were shown the finished installation and guided through operating the products');
+    if (!document.getElementById('custAckShown').checked) missing.push('Customer sign-off — shown the finished installation');
+    if (!document.getElementById('custAckGuided').checked) missing.push('Customer sign-off — guided through operating the products');
     if (isSignaturePadEmpty()) missing.push('Customer sign-off — customer signature (or tick "The client was not on site")');
   }
 
@@ -2017,7 +2125,15 @@
     if (supplied !== 'Yes') return;
     const left = document.getElementById('cgLeftOnSite').checked;
     const back = document.getElementById('cgTakenBack').checked;
-    if (!left && !back) missing.push('Control gear — left on site, or taken back to the warehouse?');
+    const veh = document.getElementById('cgInVehicle').checked;
+    if (!left && !back && !veh) missing.push('Control gear — tick where it is now: Site, Warehouse or Vehicle');
+    if (veh) {
+      if (!val('cgVehicle')) missing.push('Control gear — which vehicle it\'s in');
+      else if (val('cgVehicle') === 'Other' && !val('cgVehicleOther')) missing.push('Control gear — which other vehicle it\'s in');
+      if (!val('cgVehItems')) missing.push('Control gear — what\'s in the vehicle');
+      if (!val('cgVehReason')) missing.push('Control gear — when the vehicle\'s items will be delivered');
+      if (val('cgVehReason') === 'Other' && !val('cgVehNotes')) missing.push('Control gear — notes explaining the vehicle delivery');
+    }
     if (left && document.getElementById('clientAbsent').checked) {
       missing.push('Control gear — the client wasn\'t on site, so it can\'t be left on site');
     }
@@ -2035,28 +2151,7 @@
   }
 
   function updateIncidentPanel() {
-    const v = document.getElementById('incident').value;
-    document.getElementById('incidentPanel').classList.toggle('show', v === 'Yes');
-    document.getElementById('incidentNo').classList.toggle('active', v === 'No');
-    document.getElementById('incidentYes').classList.toggle('active', v === 'Yes');
-  }
-
-  function updateCustSatisfied() {
-    const v = document.getElementById('custSatisfied').value;
-    document.getElementById('custSatYes').classList.toggle('active', v === 'Yes');
-    document.getElementById('custSatNo').classList.toggle('active', v === 'No');
-  }
-
-  function setCustSatisfied(v) {
-    document.getElementById('custSatisfied').value = v;
-    updateCustSatisfied();
-    scheduleDraftSave();
-  }
-
-  function setIncident(v) {
-    document.getElementById('incident').value = v;
-    updateIncidentPanel();
-    scheduleDraftSave();
+    document.getElementById('incidentPanel').classList.toggle('show', document.getElementById('incident').value === 'Yes');
   }
 
   function syncCheckStyles() {
@@ -2067,6 +2162,138 @@
   document.addEventListener('change', e => {
     if (e.target && e.target.type === 'checkbox') syncCheckStyles();
   });
+
+  // ===================== JOB NOT FINISHED =====================
+  const INCOMPLETE_REASONS = ['Weather', 'Missing or damaged stock', 'Site not ready', 'Customer not available', 'Waiting on other trades', 'Other'];
+  let incompleteReasons = [];
+  let weatherData = null; // { place, window, gust, gustAt, wind, rain, maxTemp, storm, fetchedAt }
+
+  function renderReasons() {
+    const box = document.getElementById('reasonChips');
+    if (!box) return;
+    box.innerHTML = '';
+    INCOMPLETE_REASONS.forEach(r => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'reason-chip';
+      b.textContent = r;
+      b.setAttribute('aria-pressed', incompleteReasons.indexOf(r) >= 0 ? 'true' : 'false');
+      b.addEventListener('click', () => toggleReason(r));
+      box.appendChild(b);
+    });
+    document.getElementById('weatherCard').classList.toggle('show', incompleteReasons.indexOf('Weather') >= 0);
+  }
+
+  function toggleReason(r) {
+    const i = incompleteReasons.indexOf(r);
+    if (i >= 0) incompleteReasons.splice(i, 1); else incompleteReasons.push(r);
+    renderReasons();
+    if (r === 'Weather' && i < 0 && !weatherData) fetchSiteWeather(false);
+    updateIncompleteSummary();
+    scheduleDraftSave();
+  }
+
+  function updatePhotoCount() {
+    const el = document.getElementById('nfPhotoCount');
+    if (!el) return;
+    const n = mediaStore.photo.length;
+    el.textContent = n ? n + ' photo' + (n === 1 ? '' : 's') + ' added. They\'re saved with the report\'s photos (Site Collateral).'
+      : 'They\'re saved with the report\'s photos (Site Collateral).';
+  }
+
+  function updateIncompleteSummary() {
+    const el = document.getElementById('nfSummary');
+    if (!el) return;
+    const crew = Array.from(document.querySelectorAll('#crewList input')).map(i => i.value.trim()).filter(Boolean);
+    const pm = document.getElementById('projectManager').value;
+    const hrs = document.getElementById('timeRequired').value;
+    const men = document.getElementById('menRequired').value;
+    const told = document.getElementById('customerToldReturn').checked;
+    const who = ['Jan (office)'].concat(pm && pm !== 'Jan' ? ['the project manager (' + pm + ')'] : []).concat(crew.length ? [crew.join(', ')] : []);
+    el.innerHTML = '<b>When you submit</b><br>' +
+      'The report is emailed to ' + bmEscText(who.join(', ').replace(/, ([^,]*)$/, ' and $1')) + ', marked <b>Not completed: return visit needed</b>' +
+      (incompleteReasons.length ? ' (' + bmEscText(incompleteReasons.join(', ').toLowerCase()) + ')' : '') + '.<br>' +
+      'The field app shows the job as needing a return visit' + (hrs || men ? ', ' + (hrs ? hrs + ' h' : '? h') + ' for ' + (men ? men + (men === '1' ? ' person' : ' people') : '? people') : '') + '.' +
+      (incompleteReasons.indexOf('Weather') >= 0 ? '<br>The weather recorded on site is attached as evidence of a weather delay.' : '') +
+      (told ? '' : '<br>The office will call the customer about the return visit.');
+  }
+  function bmEscText(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+  // Weather from Open-Meteo (uses the Bureau of Meteorology model for Australia; no key needed).
+  async function siteCoordinates() {
+    const c = (clockData && (clockData.start || clockData.finish)) || null;
+    if (c && c.lat != null) return { lat: c.lat, lng: c.lng, label: 'where you tapped Start' };
+    const g = await getGeolocation(8000);
+    if (g) return { lat: g.latitude, lng: g.longitude, label: 'phone location when the report was filled in' };
+    const addr = document.getElementById('siteAddress').value;
+    const m = addr.match(/([A-Za-z][A-Za-z '\-]+?)\s*,?\s*(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)\b/i);
+    const suburb = m ? m[1].split(',').pop().trim() : addr.split(',').slice(-1)[0].trim();
+    if (!suburb) return null;
+    const r = await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&country=AU&name=' + encodeURIComponent(suburb));
+    const j = await r.json();
+    if (j && j.results && j.results.length) return { lat: j.results[0].latitude, lng: j.results[0].longitude, label: j.results[0].name };
+    return null;
+  }
+
+  function hhmmToMin(t) { const m = String(t || '').match(/^(\d{1,2}):(\d{2})/); return m ? Number(m[1]) * 60 + Number(m[2]) : null; }
+
+  async function fetchSiteWeather(force) {
+    const status = document.getElementById('weatherStatus');
+    if (weatherData && !force) { renderWeather(); return; }
+    status.textContent = 'Getting the weather for this site…';
+    try {
+      const date = document.getElementById('jobDate').value;
+      const pos = await siteCoordinates();
+      if (!pos) throw new Error('No location: allow location access, or check the site address');
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + pos.lat.toFixed(4) + '&longitude=' + pos.lng.toFixed(4) +
+        '&hourly=temperature_2m,precipitation,wind_speed_10m,wind_gusts_10m,weather_code&timezone=Australia%2FSydney&start_date=' + date + '&end_date=' + date;
+      const r = await fetch(url);
+      const j = await r.json();
+      if (!j.hourly || !j.hourly.time) throw new Error(j.reason || 'no forecast returned');
+      let from = hhmmToMin(document.getElementById('startTime').value);
+      let to = hhmmToMin(document.getElementById('finishTime').value);
+      const now = new Date();
+      const isToday = date === (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0'));
+      if (from == null) from = 7 * 60;
+      if (to == null) to = isToday ? now.getHours() * 60 + now.getMinutes() : 17 * 60;
+      if (to < from) to = from;
+      const h = j.hourly;
+      let gust = -1, gustAt = '', wind = -1, rain = 0, maxTemp = -99, storm = false, n = 0;
+      h.time.forEach((t, i) => {
+        const mins = Number(t.slice(11, 13)) * 60;
+        if (mins + 59 < from || mins > to) return;
+        n++;
+        if (h.wind_gusts_10m[i] > gust) { gust = h.wind_gusts_10m[i]; gustAt = t.slice(11, 16); }
+        if (h.wind_speed_10m[i] > wind) wind = h.wind_speed_10m[i];
+        rain += h.precipitation[i] || 0;
+        if (h.temperature_2m[i] > maxTemp) maxTemp = h.temperature_2m[i];
+        if (h.weather_code[i] >= 95) storm = true;
+      });
+      if (!n) throw new Error('no hourly data for those times');
+      const fmt = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+      weatherData = { place: pos.label, window: fmt(from) + ' – ' + fmt(to), gust: Math.round(gust), gustAt: gustAt,
+        wind: Math.round(wind), rain: Math.round(rain * 10) / 10, maxTemp: Math.round(maxTemp), storm: storm, fetchedAt: new Date().toISOString() };
+      renderWeather();
+      scheduleDraftSave();
+    } catch (err) {
+      status.textContent = 'Couldn\'t get the weather (' + (err.message || err) + '). Describe it in What\'s left to do, or tap Refresh.';
+    }
+  }
+
+  function renderWeather() {
+    const facts = document.getElementById('weatherFacts');
+    const status = document.getElementById('weatherStatus');
+    if (!facts) return;
+    if (!weatherData) { facts.innerHTML = ''; document.getElementById('weatherRecord').value = ''; return; }
+    const w = weatherData;
+    const rows = [['Location', w.place], ['Time', w.window], ['Wind', 'Gusts to ' + w.gust + ' km/h' + (w.gustAt ? ' at ' + w.gustAt : '') + ' (average up to ' + w.wind + ' km/h)'],
+      ['Rain', w.rain + ' mm'], ['Max temp', w.maxTemp + '°C']];
+    if (w.storm) rows.push(['Storms', 'Thunderstorm recorded in the area']);
+    facts.innerHTML = rows.map(r => '<dt>' + bmEscText(r[0]) + '</dt><dd>' + bmEscText(r[1]) + '</dd>').join('');
+    status.textContent = 'Recorded from the Bureau of Meteorology model for the hours on site.';
+    document.getElementById('weatherRecord').value = 'Gusts to ' + w.gust + ' km/h' + (w.gustAt ? ' at ' + w.gustAt : '') + ', wind up to ' + w.wind + ' km/h, rain ' + w.rain + ' mm, max ' + w.maxTemp + '°C' +
+      (w.storm ? ', thunderstorm' : '') + ' (' + w.window + ', ' + w.place + ')';
+  }
 
   function setStatus(status) {
     const completeEl = document.getElementById('statusComplete');
@@ -2083,12 +2310,40 @@
       incompleteEl.classList.add('active');
       panel.classList.add('show');
       reqSpans.forEach(el => el.style.display = 'inline');
+      updateIncompleteSummary();
     }
     scheduleDraftSave();
   }
 
   // Web App URL that receives submitted reports and saves them to Drive + email
-  const SUBMIT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzM9QOP-apaGedZTu2iH9P3ePobnHeyCYrJpIAkAxmMmQovg5zt7iib0jjnzDglGlcSUg/exec';
+  const LIVE_SUBMIT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzM9QOP-apaGedZTu2iH9P3ePobnHeyCYrJpIAkAxmMmQovg5zt7iib0jjnzDglGlcSUg/exec';
+  // TEST COPY: when this page is saved as "...-test.html" it never touches the
+  // live script. It sends to the TEST script URL you paste in once (kept on
+  // this device), and keeps its drafts separate from the live report's.
+  const TEST_MODE = /-test\.html$/i.test(location.pathname);
+  function readTestEndpoint() { try { return localStorage.getItem('bm-jr-test-endpoint') || ''; } catch (e) { return ''; } }
+  let SUBMIT_ENDPOINT = TEST_MODE ? readTestEndpoint() : LIVE_SUBMIT_ENDPOINT;
+
+  function showTestModeUi() {
+    if (!TEST_MODE) return;
+    document.body.insertAdjacentHTML('afterbegin', '<div class="test-bar">TEST COPY: submissions go to the test script only. Emails go to Simon only.</div>');
+    if (SUBMIT_ENDPOINT) return;
+    const box = document.createElement('div');
+    box.className = 'test-setup';
+    box.innerHTML = '<b>One-time setup:</b> paste the TEST Apps Script web app URL (ends in /exec).' +
+      '<input id="testEndpointInput" type="url" placeholder="https://script.google.com/macros/s/.../exec">' +
+      '<button type="button" id="testEndpointSave">Save</button>';
+    const container = document.querySelector('.container');
+    container.insertBefore(box, container.firstChild);
+    document.getElementById('testEndpointSave').onclick = () => {
+      const v = document.getElementById('testEndpointInput').value.trim();
+      if (!/^https:\/\/script\.google\.com\/(a\/macros\/[^\/]+|macros)\/s\/.+\/exec$/.test(v)) { alert('That doesn\'t look like an Apps Script /exec URL.'); return; }
+      if (v === LIVE_SUBMIT_ENDPOINT) { alert('That is the LIVE script. Paste the TEST script URL.'); return; }
+      try { localStorage.setItem('bm-jr-test-endpoint', v); } catch (e) {}
+      SUBMIT_ENDPOINT = v;
+      box.remove();
+    };
+  }
 
   const mediaStore = { photo: [], video: [], audio: [] };
 
@@ -2096,6 +2351,7 @@
     const files = Array.from(fileList);
     mediaStore[type] = mediaStore[type].concat(files);
     renderFileList(type);
+    updatePhotoCount();
   }
 
   function renderFileList(type) {
@@ -2122,6 +2378,7 @@
   function removeFile(type, idx) {
     mediaStore[type].splice(idx, 1);
     renderFileList(type);
+    updatePhotoCount();
   }
 
   // default date fields to today, then apply any calendar prefill from the URL
@@ -2133,6 +2390,11 @@
     syncTimes();
     populateHoursRequired();
     populateMenRequired();
+    showTestModeUi();
+    renderReasons();
+    updatePhotoCount();
+    ['remainingWork'].forEach(id => document.getElementById(id).addEventListener('input', updateIncompleteSummary));
+    ['timeRequired', 'menRequired'].forEach(id => document.getElementById(id).addEventListener('change', updateIncompleteSummary));
 
     // Set up the signature pad right away — this must never depend on the
     // prefill/draft-lookup network call below, so a slow network or an
@@ -2303,8 +2565,8 @@
 
       if (data.breakMins) document.getElementById('breakMins').value = data.breakMins;
       if (data.timeSource === 'manual') {
-        if (data.startTime) document.getElementById('manualStart').value = data.startTime;
-        if (data.finishTime) document.getElementById('manualFinish').value = data.finishTime;
+        if (data.startTime) setTimeValue('manualStart', data.startTime);
+        if (data.finishTime) setTimeValue('manualFinish', data.finishTime);
       } else {
         clockData = {
           start: data.startTime ? { time: data.startTime, at: data.clockStartAt || '' } : null,
@@ -2340,6 +2602,11 @@
       if (data.remainingWork) document.getElementById('remainingWork').value = data.remainingWork;
       if (data.timeRequired) document.getElementById('timeRequired').value = data.timeRequired;
       if (data.menRequired) document.getElementById('menRequired').value = data.menRequired;
+      if (data.incompleteReasons) { incompleteReasons = String(data.incompleteReasons).split(',').map(x => x.trim()).filter(x => INCOMPLETE_REASONS.indexOf(x) >= 0); renderReasons(); }
+      if (data.weatherWhat) document.getElementById('weatherWhat').value = data.weatherWhat;
+      if (data.weatherRecord) { document.getElementById('weatherRecord').value = data.weatherRecord; const f = document.getElementById('weatherFacts'); if (f) f.innerHTML = '<dt>Recorded</dt><dd>' + bmEscText(data.weatherRecord) + '</dd>'; document.getElementById('weatherStatus').textContent = 'Recorded with the last submission. Tap Refresh to fetch again.'; }
+      if (data.customerToldReturn) document.getElementById('customerToldReturn').checked = data.customerToldReturn === 'Yes';
+      updateIncompleteSummary();
 
       // Sign-off — set after the crew list is rebuilt, so the dropdown has the right options
       if (data.signoffName) {
@@ -2361,12 +2628,9 @@
       SAFETY_CHECKS.forEach(id => { if (data[id]) document.getElementById(id).checked = data[id] === 'Yes'; });
       updateIncidentPanel();
       CG_FIELDS.forEach(id => { if (data[id]) document.getElementById(id).value = data[id]; });
-      ['cgLeftOnSite', 'cgTakenBack', 'clientAbsent'].forEach(id => { if (data[id]) document.getElementById(id).checked = data[id] === 'Yes'; });
+      ['cgLeftOnSite', 'cgTakenBack', 'cgInVehicle', 'clientAbsent'].forEach(id => { if (data[id]) document.getElementById(id).checked = data[id] === 'Yes'; });
       if (data.timesForgotten) document.getElementById('forgotTap').checked = data.timesForgotten === 'Yes';
       if (data.customerName) document.getElementById('customerName').value = data.customerName;
-      if (data.customerSatisfied) document.getElementById('custSatisfied').value = data.customerSatisfied;
-      if (data.customerComments) document.getElementById('customerComments').value = data.customerComments;
-      updateCustSatisfied();
       ELEC_FIELDS.forEach(id => { if (data[id]) document.getElementById(id).value = data[id]; });
       if (data.elecAck) document.getElementById('elecAck').checked = data.elecAck === 'Yes';
       updateElectrical();
@@ -2421,8 +2685,8 @@
       const clone = document.createElement('div');
       clone.className = 'pdf-textarea-clone';
       clone.textContent = textarea.value || '';
-      clone.style.width = '100%';        // follow the card width, not the on-screen (phone) width
-      clone.style.minHeight = '90px';    // grows to fit all of the text
+      clone.style.width = textarea.offsetWidth + 'px';
+      clone.style.minHeight = textarea.offsetHeight + 'px';
       textarea.insertAdjacentElement('afterend', clone);
       textareaClones.push(clone);
     });
@@ -2433,7 +2697,6 @@
     await new Promise(resolve => setTimeout(resolve, 100));
 
     let canvas;
-    let breakPointsPx = []; // where each card ends, so page breaks never cut through one
     try {
       canvas = await html2canvas(document.body, {
         scale: 2,
@@ -2441,12 +2704,7 @@
         backgroundColor: '#ffffff',
         scrollX: 0,
         scrollY: -window.scrollY,
-        windowWidth: 950,
-        onclone: (clonedDoc) => {
-          const bodyTop = clonedDoc.body.getBoundingClientRect().top;
-          breakPointsPx = Array.from(clonedDoc.querySelectorAll('.header, .card'))
-            .map(el => (el.getBoundingClientRect().bottom - bodyTop) * 2); // 2 = html2canvas scale
-        }
+        windowWidth: 950
       });
     } finally {
       document.body.classList.remove('capturing-for-pdf');
@@ -2468,14 +2726,7 @@
     let isFirstPage = true;
 
     while (renderedHeightPx < canvasHeightPx) {
-      let sliceHeightPx = Math.min(pageHeightPx, canvasHeightPx - renderedHeightPx);
-
-      // If more pages follow, end this page at the last card boundary that fits
-      if (renderedHeightPx + sliceHeightPx < canvasHeightPx) {
-        const limit = renderedHeightPx + pageHeightPx;
-        const fits = breakPointsPx.filter(b => b > renderedHeightPx + 50 && b <= limit);
-        if (fits.length) sliceHeightPx = Math.floor(fits[fits.length - 1] - renderedHeightPx);
-      }
+      const sliceHeightPx = Math.min(pageHeightPx, canvasHeightPx - renderedHeightPx);
 
       const pageCanvas = document.createElement('canvas');
       pageCanvas.width = canvasWidthPx;
@@ -2574,7 +2825,10 @@
       if (!document.getElementById('remainingWork').value.trim()) missing.push('Outstanding Work / What Remains to Be Done');
       if (!document.getElementById('timeRequired').value) missing.push('Anticipated Time Required');
       if (!document.getElementById('menRequired').value) missing.push('Number of Men Required');
+      if (!incompleteReasons.length) missing.push('Why the job couldn\'t be finished');
+      if (incompleteReasons.indexOf('Weather') >= 0 && !document.getElementById('weatherWhat').value) missing.push('Weather — What Happened');
     }
+    if (!SUBMIT_ENDPOINT) missing.push('Test script URL (paste it in the box at the top)');
 
     const crewNamesForValidation = Array.from(document.querySelectorAll('#crewList input'))
       .map(i => i.value.trim())
@@ -2670,27 +2924,31 @@
       formData.append('remainingWork', document.getElementById('remainingWork').value.trim());
       formData.append('timeRequired', document.getElementById('timeRequired').value.trim());
       formData.append('menRequired', document.getElementById('menRequired').value.trim());
+      if (status === 'Not Completed') {
+        const weatherPicked = incompleteReasons.indexOf('Weather') >= 0;
+        formData.append('incompleteReasons', incompleteReasons.join(', '));
+        formData.append('weatherWhat', weatherPicked ? document.getElementById('weatherWhat').value : '');
+        formData.append('weatherRecord', weatherPicked ? document.getElementById('weatherRecord').value : '');
+        formData.append('customerToldReturn', document.getElementById('customerToldReturn').checked ? 'Yes' : 'No');
+      }
       formData.append('signoffName', getSignoffName());
       formData.append('signoffDate', document.getElementById('signoffDate').value);
       formData.append('incident', document.getElementById('incident').value);
       formData.append('incidentDetails', document.getElementById('incidentDetails').value.trim());
       SAFETY_CHECKS.forEach(id => formData.append(id, document.getElementById(id).checked ? 'Yes' : 'No'));
       CG_FIELDS.forEach(id => formData.append(id, document.getElementById(id).value.trim()));
-      ['cgLeftOnSite', 'cgTakenBack'].forEach(id => formData.append(id, document.getElementById(id).checked ? 'Yes' : 'No'));
+      ['cgLeftOnSite', 'cgTakenBack', 'cgInVehicle'].forEach(id => formData.append(id, document.getElementById(id).checked ? 'Yes' : 'No'));
+      formData.append('cgVehicleName', document.getElementById('cgVehicle').value === 'Other' ? document.getElementById('cgVehicleOther').value : document.getElementById('cgVehicle').value);
       ELEC_FIELDS.forEach(id => formData.append(id, document.getElementById(id).value.trim()));
       formData.append('elecAck', document.getElementById('elecAck').checked ? 'Yes' : 'No');
       formData.append('cgPhotoCount', String(cgPhotos.length));
-      const noSignoff = document.getElementById('clientAbsent').checked || isForgotTap();
+      const noSignoff = document.getElementById('clientAbsent').checked;
       const clientAbsent = noSignoff;
       formData.append('clientAbsent', document.getElementById('clientAbsent').checked ? 'Yes' : 'No');
       formData.append('timesForgotten', isForgotTap() ? 'Yes' : 'No');
       formData.append('customerName', clientAbsent ? '' : document.getElementById('customerName').value.trim());
-      const custAckYesNo = !clientAbsent && document.getElementById('custAck').checked ? 'Yes' : 'No';
-      formData.append('custAck', custAckYesNo);
-      formData.append('custAckShown', custAckYesNo);   // kept so the existing Apps Script still gets these
-      formData.append('custAckGuided', custAckYesNo);
-      formData.append('customerSatisfied', clientAbsent ? '' : document.getElementById('custSatisfied').value);
-      formData.append('customerComments', clientAbsent ? '' : document.getElementById('customerComments').value.trim());
+      formData.append('custAckShown', !clientAbsent && document.getElementById('custAckShown').checked ? 'Yes' : 'No');
+      formData.append('custAckGuided', !clientAbsent && document.getElementById('custAckGuided').checked ? 'Yes' : 'No');
       formData.append('customerSigned', !clientAbsent && !isSignaturePadEmpty() ? 'Yes' : 'No');
 
       let mediaPayload;
@@ -2764,14 +3022,15 @@
   // ---- Save as you go (auto-saved draft on this device) ----
   // Each job gets its own draft, keyed by job ref (or calendar event if
   // there's no ref yet), so an installer can have several jobs part-done.
-  const JOB_DRAFT_PREFIX = 'blindmaster-job-report:';
+  const JOB_DRAFT_PREFIX = TEST_MODE ? 'blindmaster-job-report-test:' : 'blindmaster-job-report:';
   const DRAFT_MAX_AGE_DAYS = 30;
   const DRAFT_FIELDS = ['clientName', 'jobRef', 'siteAddress', 'jobDate', 'projectManager', 'calEventId', 'calId',
     'startTime', 'finishTime', 'tasksDone', 'remainingWork', 'timeRequired', 'menRequired', 'signoffDate',
     'incident', 'incidentDetails',
-    'cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere', 'cgBackItems', 'cgBackReason', 'cgBackNotes',
-    'customerName', 'custSatisfied', 'customerComments', 'manualStart', 'manualFinish', 'breakMins',
-    'elecInvolved', 'elecStatus', 'elecContractor', 'elecContractorOther', 'elecNotes'];
+    'cgSupplied', 'cgLeftItems', 'cgLeftWith', 'cgLeftWithName', 'cgLeftWhere', 'cgBackItems', 'cgBackReason', 'cgBackNotes', 'cgVehicle', 'cgVehicleOther', 'cgVehItems', 'cgVehReason', 'cgVehNotes',
+    'customerName', 'manualStart', 'manualFinish', 'breakMins',
+    'elecInvolved', 'elecStatus', 'elecContractor', 'elecContractorOther', 'elecNotes',
+    'weatherWhat', 'weatherRecord'];
 
   let draftSavingEnabled = false;
   let draftSaveTimer = null;
@@ -2790,6 +3049,8 @@
     draft.status = document.getElementById('statusComplete').classList.contains('active') ? 'complete'
       : document.getElementById('statusIncomplete').classList.contains('active') ? 'incomplete' : '';
     draft.individualTimes = JSON.parse(JSON.stringify(individualTimesData));
+    draft.incompleteReasons = incompleteReasons.slice();
+    draft.weatherData = weatherData;
     draft.signoffName = getSignoffName();
     draft.clock = clockData;
     draft.checks = {};
@@ -2802,7 +3063,10 @@
     draftSavingEnabled = false;
 
     DRAFT_FIELDS.forEach(id => {
-      if (draft.fields && draft.fields[id] !== undefined) document.getElementById(id).value = draft.fields[id];
+      if (draft.fields && draft.fields[id] !== undefined) {
+        if (id === 'manualStart' || id === 'manualFinish') setTimeValue(id, draft.fields[id]);
+        else document.getElementById(id).value = draft.fields[id];
+      }
     });
 
     Object.keys(individualTimesData).forEach(k => delete individualTimesData[k]);
@@ -2816,8 +3080,12 @@
     if (draft.status) setStatus(draft.status);
     SAFETY_CHECKS.concat(CG_CHECKS).forEach(id => { if (draft.checks && draft.checks[id] !== undefined) document.getElementById(id).checked = !!draft.checks[id]; });
     if (draft.clock) clockData = draft.clock;
+    incompleteReasons = Array.isArray(draft.incompleteReasons) ? draft.incompleteReasons.slice() : [];
+    weatherData = draft.weatherData || null;
+    renderReasons();
+    renderWeather();
+    updateIncompleteSummary();
     updateIncidentPanel();
-    updateCustSatisfied();
     updateElectrical();
     updateCustomerSignoff();
     syncCheckStyles();

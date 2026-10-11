@@ -1323,7 +1323,8 @@
   // Web App URL of the Daily Report Apps Script (ends in /exec).
   const SUBMIT_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzX7-uQq4lG0WDzoe9WGJP5ZHP4_SFtpoC3sOoB9AA5qqVIou9bxNU9Vg0IPgLoolizyQ/exec';
 
-  const STAFF_NAMES = ['Simon Lightfoot', 'Andrew', 'Troy Breglec', 'Lewis Hillard', 'Mark Johnson', 'Owen Nolan'];
+  // Fallback list: replaced by the Field App's staff directory when it loads (see loadRoster below)
+  let STAFF_NAMES = ['Simon Lightfoot', 'Andrew', 'Troy Breglec', 'Lewis Hillard', 'Mark Johnson', 'Owen Nolan'];
 
   const JOB_OUTCOMES = [
     'Completed',
@@ -1403,16 +1404,18 @@
 
   // ================= INSTALLER =================
   function populateInstallerOptions() {
+    const keep = $('installerName').value;
     $('installerName').innerHTML = '<option value="">Select your name</option>' +
       STAFF_NAMES.map(n => '<option value="' + escapeHtml(n) + '">' + escapeHtml(n) + '</option>').join('') +
       '<option value="__other__">Other (type name)</option>';
     $('staffList').innerHTML = STAFF_NAMES.map(n => '<option value="' + escapeHtml(n) + '">').join('');
+    if (keep) $('installerName').value = keep;
   }
 
   // Each installer's usual vehicle — filled into Vehicle / Rego from the
   // installer's name. Matched on first name, so "Andrew" and "Andrew
   // Armstrong" both work. Installers can still change it on the day.
-  const INSTALLER_VEHICLES = {
+  let INSTALLER_VEHICLES = {
     'Mark': 'Ford Ranger',
     'Lewis': 'Toyota Hiace',
     'Simon': 'Volvo XC60',
@@ -1420,7 +1423,11 @@
     'Andrew': 'Toyota Fortuner'
   };
 
+  let ROSTER_VEHICLES = {}; // full name -> "Toyota Hiace – ABC12D", from the staff directory
   function vehicleFor(name) {
+    const full = String(name || '').trim().toLowerCase();
+    const hit = Object.keys(ROSTER_VEHICLES).find(k => k.toLowerCase() === full);
+    if (hit) return ROSTER_VEHICLES[hit];
     const first = String(name || '').trim().split(/\s+/)[0].toLowerCase();
     const key = Object.keys(INSTALLER_VEHICLES).find(k => k.toLowerCase() === first);
     return key ? INSTALLER_VEHICLES[key] : '';
@@ -2705,9 +2712,37 @@
     catch (e) { showBanner('error', "This browser blocked printing. Open the report in Chrome or Safari and use the browser's own Print option."); }
   }
 
+
+  // ================= STAFF AND VEHICLES FROM THE FIELD APP =================
+  // Installer names and each driver's vehicle come from the Field App's staff directory
+  // (Simon and Troy keep it up to date). The lists above are the fallback.
+  const FIELD_APP_URL = 'https://script.google.com/macros/s/AKfycby8NMk1Bs9bwDznUcBFfhYP5kr2JkDIDi2_Oe8kHKwl2ZFJxBfRrTaCS3n-is8HAkGwnA/exec';
+  function applyRoster(r) {
+    if (!r || !Array.isArray(r.staff) || !r.staff.length) return;
+    const names = r.staff.filter(p => p.installer || p.vehicle).map(p => p.name);
+    if (names.length) {
+      const typed = getInstallerName();
+      STAFF_NAMES = names;
+      populateInstallerOptions();
+      if (typed && $('installerName').value !== typed) setInstallerName(typed);
+    }
+    const map = {};
+    r.staff.forEach(p => { if (p.vehicle) map[p.name] = p.vehicle + (p.plate ? ' – ' + p.plate : ''); });
+    ROSTER_VEHICLES = map;
+    fillVehicleFromInstaller();
+  }
+  function loadRoster() {
+    try { applyRoster(JSON.parse(localStorage.getItem('bm-roster') || 'null')); } catch (e) {}
+    fetch(FIELD_APP_URL + '?action=roster', { redirect: 'follow' }).then(res => res.json()).then(r => {
+      if (!r || !r.ok) return;
+      try { localStorage.setItem('bm-roster', JSON.stringify(r)); } catch (e) {}
+      applyRoster(r);
+    }).catch(() => {});
+  }
   // ================= INIT =================
   window.addEventListener('DOMContentLoaded', () => {
     populateInstallerOptions();
+    loadRoster();
     ['warehouseStartTime', 'warehouseFinishTime', 'siteStartTime', 'siteFinishTime'].forEach(id => {
       $(id).innerHTML = buildTimeOptionsHTML();
       $(id).addEventListener('change', updateDayHours);

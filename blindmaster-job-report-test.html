@@ -947,6 +947,7 @@
 
     <label>Installer Names</label>
     <div id="crewList"></div>
+    <datalist id="crewNameList"></datalist>
     <button type="button" class="add-btn" onclick="addCrewRow(); scheduleDraftSave();"><span class="plus">+</span> Add Installer</button>
   </div>
 
@@ -1459,7 +1460,7 @@
     row.className = 'crew-row';
     row.id = 'crewRow-' + crewRowCount;
     row.innerHTML = `
-      <input type="text" placeholder="Installer full name" value="${name || ''}" oninput="updateCrewCount(); updateSignoffNameOptions(); updateIndividualTimesPanel();">
+      <input type="text" list="crewNameList" autocomplete="off" placeholder="Installer full name" value="${name || ''}" oninput="updateCrewCount(); updateSignoffNameOptions(); updateIndividualTimesPanel();">
       <button type="button" class="icon-btn remove" onclick="removeCrewRow(${crewRowCount})" title="Remove">&times;</button>
     `;
     list.appendChild(row);
@@ -2381,8 +2382,57 @@
     updatePhotoCount();
   }
 
+
+  // ===================== STAFF AND VEHICLES FROM THE FIELD APP =====================
+  // Names (project managers, crew) and vehicles come from the Field App's staff directory,
+  // so Simon and Troy update them in one place. The lists already in this page are the
+  // fallback if the directory can't be reached (and the last copy is kept on the phone).
+  const FIELD_APP_URL = 'https://script.google.com/macros/s/AKfycby8NMk1Bs9bwDznUcBFfhYP5kr2JkDIDi2_Oe8kHKwl2ZFJxBfRrTaCS3n-is8HAkGwnA/exec';
+  function rosterCached() { try { return JSON.parse(localStorage.getItem('bm-roster') || 'null'); } catch (e) { return null; } }
+  function fillSelectKeep(select, options, keepFirst) {
+    if (!select || !options.length) return;
+    const current = select.value;
+    const first = keepFirst ? select.options[0].outerHTML : '';
+    const extra = Array.from(select.options).filter(o => o.value === 'Other');
+    select.innerHTML = first + options.map(o => '<option value="' + o.replace(/"/g, '&quot;') + '">' + o.replace(/</g, '&lt;') + '</option>').join('') +
+      extra.map(o => o.outerHTML).join('');
+    if (current && !Array.from(select.options).some(o => o.value === current)) {
+      const opt = document.createElement('option'); opt.value = current; opt.textContent = current; select.appendChild(opt);
+    }
+    select.value = current;
+  }
+  function applyRoster(r) {
+    if (!r || !Array.isArray(r.staff) || !r.staff.length) return;
+    const pms = r.staff.filter(p => p.pm).map(p => p.first).filter((n, i, a) => n && a.indexOf(n) === i);
+    const pmSel = document.getElementById('projectManager');
+    if (pms.length && pmSel) {
+      const cur = pmSel.value;
+      pmSel.innerHTML = '<option value="" disabled' + (cur ? '' : ' selected') + '>Select project manager</option>' + pms.map(n => '<option value="' + n + '">' + n + '</option>').join('');
+      if (cur && pms.indexOf(cur) < 0) { const o = document.createElement('option'); o.value = cur; o.textContent = cur; pmSel.appendChild(o); }
+      if (cur) pmSel.value = cur;
+    }
+    const names = r.staff.slice().sort((a, b) => ((b.installer ? 1 : 0) - (a.installer ? 1 : 0)) || a.name.localeCompare(b.name)).map(p => p.name);
+    const dl = document.getElementById('crewNameList');
+    if (dl) dl.innerHTML = names.map(n => '<option value="' + n.replace(/"/g, '&quot;') + '">').join('');
+    if (Array.isArray(r.vehicles) && r.vehicles.length) {
+      const main = r.vehicles.filter(v => v.installerDriver).map(v => v.label);
+      const others = r.vehicles.filter(v => !v.installerDriver).map(v => v.label);
+      fillSelectKeep(document.getElementById('cgVehicle'), main.length ? main : others, true);
+      fillSelectKeep(document.getElementById('cgVehicleOther'), main.length ? others : [], true);
+      if (typeof updateControlGear === 'function') updateControlGear();
+    }
+  }
+  function loadRoster() {
+    applyRoster(rosterCached());
+    fetch(FIELD_APP_URL + '?action=roster', { redirect: 'follow' }).then(res => res.json()).then(r => {
+      if (!r || !r.ok) return;
+      try { localStorage.setItem('bm-roster', JSON.stringify(r)); } catch (e) {}
+      applyRoster(r);
+    }).catch(() => {});
+  }
   // default date fields to today, then apply any calendar prefill from the URL
   window.addEventListener('DOMContentLoaded', () => {
+    loadRoster();
     const now = new Date();
     const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     document.getElementById('jobDate').value = today;

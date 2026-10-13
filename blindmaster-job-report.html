@@ -658,6 +658,22 @@
     box-sizing: border-box;
   }
   body.capturing-for-pdf .pdf-textarea-clone { display: block; }
+
+  /* Stand-in for single-line boxes (inputs, drop-downs) during PDF capture —
+     the PDF library draws their text too high, clipping it. */
+  .pdf-field-clone {
+    display: none;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    padding: 0 12px;
+  }
+  body.capturing-for-pdf .pdf-field-clone { display: block; }
+  body.capturing-for-pdf .pdf-hidden-for-capture { display: none !important; }
   body.capturing-for-pdf .container { margin-top: 0; }
 
   /* Safety & site checks */
@@ -2750,6 +2766,7 @@
     // would already be 0.
     const textareaClones = [];
     document.querySelectorAll('textarea').forEach(textarea => {
+      if (textarea.offsetParent === null) return; // hidden (e.g. a closed panel)
       const clone = document.createElement('div');
       clone.className = 'pdf-textarea-clone';
       clone.textContent = textarea.value || '';
@@ -2759,7 +2776,57 @@
       textareaClones.push(clone);
     });
 
+    // Same for single-line boxes: each input / drop-down is swapped for plain
+    // text of the same size, so the PDF shows the answer centred and legible.
+    const fieldClones = [];
+    const prettyDate = v => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); return m ? m[3] + '/' + m[2] + '/' + m[1] : v; };
+    const prettyTime = v => {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(v);
+      if (!m) return v;
+      const h = Number(m[1]);
+      return ((h % 12) || 12) + ':' + m[2] + (h < 12 ? ' am' : ' pm');
+    };
+    document.querySelectorAll('input:not([type]), input[type="text"], input[type="date"], input[type="time"], input[type="number"], input[type="email"], input[type="tel"], select').forEach(el => {
+      if (el.offsetParent === null) return; // hidden
+      let text = el.tagName === 'SELECT'
+        ? (el.value !== '' && el.selectedIndex >= 0 ? el.options[el.selectedIndex].text : '')
+        : (el.value || '');
+      if (el.type === 'date') text = prettyDate(text);
+      if (el.type === 'time') text = prettyTime(text);
+      const cs = getComputedStyle(el);
+      const clone = document.createElement('div');
+      clone.className = 'pdf-field-clone';
+      clone.textContent = text;
+      clone.style.width = el.offsetWidth + 'px';
+      clone.style.height = el.offsetHeight + 'px';
+      clone.style.lineHeight = Math.max(0, el.offsetHeight - parseFloat(cs.borderTopWidth) - parseFloat(cs.borderBottomWidth)) + 'px';
+      clone.style.border = cs.borderTopWidth + ' solid ' + cs.borderTopColor;
+      clone.style.background = cs.backgroundColor;
+      clone.style.fontWeight = cs.fontWeight;
+      clone.style.color = cs.color;
+      clone.style.marginTop = cs.marginTop;
+      el.insertAdjacentElement('afterend', clone);
+      el.classList.add('pdf-hidden-for-capture');
+      fieldClones.push([el, clone]);
+    });
+
+    // On-screen messages never belong in the PDF
+    const hiddenForPdf = ['prefillBanner', 'statusBanner', 'draftBanner', 'draftStatus', 'uploadRetryRow']
+      .map(id => document.getElementById(id)).filter(Boolean)
+      .map(el => { const was = el.style.display; el.style.display = 'none'; return [el, was]; });
+
     document.body.classList.add('capturing-for-pdf');
+
+    // The PDF library doesn't always respect panels hidden by the stylesheet
+    // (e.g. "What happened" showing when the answer is No), so anything the
+    // browser is hiding is hidden explicitly for the snapshot too.
+    const forcedHidden = [];
+    document.querySelectorAll('.container *').forEach(el => {
+      if (!el.style.display && getComputedStyle(el).display === 'none') {
+        el.style.display = 'none';
+        forcedHidden.push(el);
+      }
+    });
 
     // Give the browser a moment to apply the class and settle scroll before capturing
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -2777,6 +2844,9 @@
     } finally {
       document.body.classList.remove('capturing-for-pdf');
       textareaClones.forEach(clone => clone.remove());
+      fieldClones.forEach(([el, clone]) => { clone.remove(); el.classList.remove('pdf-hidden-for-capture'); });
+      hiddenForPdf.forEach(([el, was]) => { el.style.display = was; });
+      forcedHidden.forEach(el => { el.style.display = ''; });
       window.scrollTo(0, originalScrollY);
     }
 

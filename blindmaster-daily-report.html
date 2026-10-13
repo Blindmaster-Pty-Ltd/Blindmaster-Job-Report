@@ -2094,6 +2094,10 @@
       const file = this.files && this.files[0];
       this.value = '';
       if (!file) return;
+      if (!/^image\//i.test(file.type || '') && file.size > 30 * 1024 * 1024) {
+        card.querySelector('.receipt-file-name').textContent = 'That file is over 30 MB — take a photo of the receipt instead.';
+        return;
+      }
       card.querySelector('.receipt-file-name').textContent = 'Preparing photo…';
       const processed = await prepareReceiptFile(file);
       if (!processed) {
@@ -2603,6 +2607,44 @@
     return missing;
   }
 
+  // ---- Sending, with a timeout and retries (Jan, Oct 2026) ----
+  const SUBMIT_TIMEOUT_MS = 4 * 60 * 1000;
+  const SEND_ATTEMPTS = 3;
+  let currentSubmissionId = '';   // same ID on every retry, so the server never saves twice
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function postWithTimeout(formData, timeoutMs) {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = setTimeout(() => { if (ctrl) ctrl.abort(); }, timeoutMs);
+    try {
+      const res = await fetch(SUBMIT_ENDPOINT, { method: 'POST', body: formData, signal: ctrl ? ctrl.signal : undefined });
+      try { return await res.json(); }
+      catch (e) { throw new Error('the server sent back an unexpected response (HTTP ' + res.status + ')'); }
+    } catch (err) {
+      if (err && err.name === 'AbortError') throw new Error('it took longer than ' + Math.round(timeoutMs / 60000) + ' minutes');
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function postWithRetry(formData, timeoutMs, onAttempt) {
+    let lastErr = null, waits = 0;
+    for (let attempt = 1; attempt <= SEND_ATTEMPTS; attempt++) {
+      try {
+        if (onAttempt) onAttempt(attempt);
+        const data = await postWithTimeout(formData, timeoutMs);
+        if (data && data.pending && waits < 20) { waits++; attempt--; await sleep(8000); continue; }
+        return data;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < SEND_ATTEMPTS) await sleep(attempt * 5000);
+      }
+    }
+    throw lastErr || new Error('it could not be sent');
+  }
+
   async function submitReport() {
     clearBanner();
     if (isRecording) stopDictation();
@@ -2669,21 +2711,21 @@
         throw new Error('Failed while generating the report PDF: ' + describeError(pdfErr) + '. Try again, or use "Print / Save as PDF" and send it to the office.');
       }
 
-      let response;
-      try {
-        response = await fetch(SUBMIT_ENDPOINT, { method: 'POST', body: fd });
-      } catch (netErr) {
-        throw new Error('Could not reach the submission server: ' + describeError(netErr) + '. Your report is still saved on this device — check your connection and try again.');
-      }
+      if (!currentSubmissionId) currentSubmissionId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+      fd.append('submissionId', currentSubmissionId);
 
       let result;
       try {
-        result = await response.json();
-      } catch (parseErr) {
-        throw new Error('The submission server sent back an unexpected response (HTTP ' + response.status + '). Your report is still saved on this device — try again shortly.');
+        result = await postWithRetry(fd, SUBMIT_TIMEOUT_MS, attempt => {
+          showBanner('success', (attempt > 1 ? 'Connection problem — trying again (' + attempt + ' of ' + SEND_ATTEMPTS + ')…' : 'Submitting your daily report…') +
+            '\n\nKeep this page open.');
+        });
+      } catch (netErr) {
+        throw new Error('The report could not be sent after ' + SEND_ATTEMPTS + ' tries (' + describeError(netErr) + '). Your report is still saved on this device — check your signal and tap Submit again.');
       }
 
       if (result.success) {
+        currentSubmissionId = '';
         removeDraft(currentDraftKey);
         draftSavingEnabled = false;
         $('draftStatus').textContent = 'Submitted — draft cleared from this device.';

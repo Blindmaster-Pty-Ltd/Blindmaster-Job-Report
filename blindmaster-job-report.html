@@ -1314,7 +1314,7 @@
         <div class="media-uploader" id="uploader-photo">
           <div class="m-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
           <div class="m-title">Photos</div>
-          <div class="m-sub">JPG, PNG, HEIC</div>
+          <div class="m-sub">JPG, PNG, HEIC · resized before upload</div>
           <div class="file-input-wrap">
             <label class="file-btn" for="photoInput">Add Photos</label>
             <input type="file" id="photoInput" accept="image/*" multiple onchange="handleFiles('photo', this.files)">
@@ -1326,7 +1326,7 @@
         <div class="media-uploader" id="uploader-video">
           <div class="m-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="6" width="13" height="12"/><path d="M16 10l5-3v10l-5-3z"/></svg></div>
           <div class="m-title">Videos</div>
-          <div class="m-sub">MP4, MOV</div>
+          <div class="m-sub">MP4, MOV · up to 30 MB each</div>
           <div class="file-input-wrap">
             <label class="file-btn" for="videoInput">Add Video</label>
             <input type="file" id="videoInput" accept="video/*" multiple onchange="handleFiles('video', this.files)">
@@ -1338,7 +1338,7 @@
         <div class="media-uploader" id="uploader-audio">
           <div class="m-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
           <div class="m-title">Voice Notes</div>
-          <div class="m-sub">MP3, M4A, WAV</div>
+          <div class="m-sub">MP3, M4A, WAV · up to 30 MB each</div>
           <div class="file-input-wrap">
             <label class="file-btn" for="audioInput">Add Recording</label>
             <input type="file" id="audioInput" accept="audio/*" multiple onchange="handleFiles('audio', this.files)">
@@ -1435,6 +1435,7 @@
 </div>
 
 <div id="statusBanner" class="status-banner"><div class="inner" id="statusBannerInner"></div></div>
+<div class="submit-row" id="uploadRetryRow" style="display:none;"><button type="button" class="btn-primary" id="retryUploadsBtn" onclick="retryFailedUploads()">Retry failed uploads</button></div>
 
 <div class="submit-row">
   <button type="button" class="btn-secondary" onclick="printReport()">Print / Save as PDF</button>
@@ -2348,8 +2349,25 @@
 
   const mediaStore = { photo: [], video: [], audio: [] };
 
+  // Jan: one huge video can time the whole report out, so anything over
+  // 30 MB is refused when it's added (photos are shrunk, so this mainly
+  // catches long videos and voice notes).
+  const MAX_FILE_BYTES = 30 * 1024 * 1024;
+
+  function formatBytes(n) {
+    return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+  }
+
   function handleFiles(type, fileList) {
-    const files = Array.from(fileList);
+    const all = Array.from(fileList || []);
+    // Photos are shrunk before upload, so only videos and voice notes are capped
+    const tooBig = type === 'photo' ? [] : all.filter(f => f.size > MAX_FILE_BYTES);
+    const files = all.filter(f => tooBig.indexOf(f) === -1);
+    if (tooBig.length) {
+      alert('These files are over 30 MB and can\'t be attached:\n\n' +
+        tooBig.map(f => '• ' + f.name + ' (' + formatBytes(f.size) + ')').join('\n') +
+        '\n\nRecord a shorter clip, or send it to the office another way.');
+    }
     mediaStore[type] = mediaStore[type].concat(files);
     renderFileList(type);
     updatePhotoCount();
@@ -2837,21 +2855,162 @@
     });
   }
 
-  async function collectMediaAsBase64() {
-    const payload = [];
-    for (const type of ['photo', 'video', 'audio']) {
-      for (const file of mediaStore[type]) {
-        const dataUrl = await fileToDataUrl(file);
-        payload.push({ type, name: file.name, mimeType: file.type, dataUrl });
+  // Everything to upload after the report is saved: one entry per file.
+  // Files are read (and photos shrunk) only when each one is sent, so a long
+  // list never has to sit in memory all at once.
+  function buildUploadQueue() {
+    const queue = [];
+    const used = {};
+    const uniqueName = name => {
+      let n = name || 'file', i = 2;
+      const dot = n.lastIndexOf('.');
+      const stem = dot > 0 ? n.slice(0, dot) : n, ext = dot > 0 ? n.slice(dot) : '';
+      while (used[n.toLowerCase()]) n = stem + ' (' + (i++) + ')' + ext;
+      used[n.toLowerCase()] = true;
+      return n;
+    };
+    ['photo', 'video', 'audio'].forEach(type => {
+      mediaStore[type].forEach(file => {
+        let name = file.name || type;
+        if (type === 'photo') name = name.replace(/\.(heic|heif|png|webp|jpeg)$/i, '.jpg');
+        queue.push({ key: type + ':' + queue.length, type: type, file: file, name: uniqueName(name) });
+      });
+    });
+    cgPhotos.forEach((photo, i) => {
+      queue.push({ key: 'cg:' + i, type: 'photo', dataUrl: photo.dataUrl, mimeType: 'image/jpeg', name: uniqueName('Control gear location ' + (i + 1) + '.jpg') });
+    });
+    return queue;
+  }
+
+  async function readUploadItem(item) {
+    if (item.dataUrl) return { dataUrl: item.dataUrl, mimeType: item.mimeType || 'image/jpeg' };
+    if (item.type === 'photo' && /^image\//i.test(item.file.type || 'image/')) {
+      const shrunk = await shrinkPhoto(item.file);            // ~1600px JPEG, same as the control gear photos
+      if (shrunk) return { dataUrl: shrunk, mimeType: /^data:image\/jpeg/i.test(shrunk) ? 'image/jpeg' : (item.file.type || 'image/jpeg') };
+    }
+    return { dataUrl: await fileToDataUrl(item.file), mimeType: item.file.type || 'application/octet-stream' };
+  }
+
+  // Kept for older code paths; the report no longer sends media in one go.
+  async function collectMediaAsBase64() { return []; }
+
+  // ---- Sending, with a timeout and retries (Jan) ----
+  const SUBMIT_TIMEOUT_MS = 4 * 60 * 1000;   // the report + PDF
+  const UPLOAD_TIMEOUT_MS = 3 * 60 * 1000;   // each photo / video / voice note
+  const SEND_ATTEMPTS = 3;
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function postWithTimeout(formData, timeoutMs) {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = setTimeout(() => { if (ctrl) ctrl.abort(); }, timeoutMs);
+    try {
+      const res = await fetch(SUBMIT_ENDPOINT, { method: 'POST', body: formData, signal: ctrl ? ctrl.signal : undefined });
+      try {
+        return await res.json();
+      } catch (e) {
+        throw new Error('the server sent back an unexpected response (HTTP ' + res.status + ')');
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') throw new Error('it took longer than ' + Math.round(timeoutMs / 60000) + ' minutes');
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // Sends one request, retrying on a timeout or dropped connection. The server
+  // recognises a repeat of the same request, so a retry never saves twice.
+  async function postWithRetry(formData, timeoutMs, onAttempt) {
+    let lastErr = null, waits = 0;
+    for (let attempt = 1; attempt <= SEND_ATTEMPTS; attempt++) {
+      try {
+        if (onAttempt) onAttempt(attempt);
+        const data = await postWithTimeout(formData, timeoutMs);
+        if (data && data.pending && waits < 20) {      // an earlier try is still being saved
+          waits++; attempt--;
+          await sleep(8000);
+          continue;
+        }
+        return data;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < SEND_ATTEMPTS) await sleep(attempt * 5000);
       }
     }
-    return payload;
+    throw lastErr || new Error('it could not be sent');
+  }
+
+  function newId() {
+    return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+
+  // Uploads each file in its own request. Returns the items that failed.
+  let uploadTicket = '';
+  let currentSubmissionId = '';   // same ID on every retry of one submission
+  let uploadSubmissionId = '';    // the submission the attachments belong to
+  let failedUploads = [];
+
+  async function uploadQueue(queue) {
+    const failed = [];
+    for (let i = 0; i < queue.length; i++) {
+      const item = queue[i];
+      showBanner('success', 'Report saved. Uploading attachments: ' + (i + 1) + ' of ' + queue.length + ' (' + item.name + ')…\n\nKeep this page open until it finishes.');
+      try {
+        const read = await readUploadItem(item);
+        const approxBytes = Math.round((read.dataUrl.length - read.dataUrl.indexOf(',') - 1) * 3 / 4);
+        if (approxBytes > MAX_FILE_BYTES) throw new Error('it is over 30 MB');
+        const fd = new FormData();
+        fd.append('action', 'uploadMedia');
+        fd.append('ticket', uploadTicket);
+        fd.append('submissionId', uploadSubmissionId);
+        fd.append('fileKey', item.key);
+        fd.append('name', item.name);
+        fd.append('mimeType', read.mimeType);
+        fd.append('dataUrl', read.dataUrl);
+        const result = await postWithRetry(fd, UPLOAD_TIMEOUT_MS);
+        if (!result || !result.success) throw new Error((result && result.error) || 'not saved');
+      } catch (err) {
+        item.error = describeError(err);
+        failed.push(item);
+      }
+    }
+    return failed;
+  }
+
+  function finishUploads(failed, baseMessage, unfiled) {
+    failedUploads = failed;
+    const retryRow = document.getElementById('uploadRetryRow');
+    const submitBtn = document.getElementById('submitBtn');
+    if (failed.length) {
+      retryRow.style.display = 'flex';
+      showBanner('error', baseMessage + '\n\n' + failed.length + ' attachment' + (failed.length === 1 ? '' : 's') + ' did NOT upload:\n' +
+        failed.map(f => '• ' + f.name + ' — ' + f.error).join('\n') +
+        '\n\nThe report itself is saved. Tap "Retry failed uploads" (keep this page open), or send these files to the office.');
+      submitBtn.textContent = 'Report saved — uploads incomplete';
+    } else {
+      retryRow.style.display = 'none';
+      showBanner(unfiled ? 'error' : 'success', baseMessage);
+      submitBtn.textContent = unfiled ? 'Saved to Unfiled' : 'Submitted ✓';
+    }
+  }
+
+  let lastResultMessage = '', lastResultUnfiled = false;
+
+  async function retryFailedUploads() {
+    if (!failedUploads.length) return;
+    const btn = document.getElementById('retryUploadsBtn');
+    btn.disabled = true;
+    const failed = await uploadQueue(failedUploads.map(f => Object.assign({}, f, { error: '' })));
+    btn.disabled = false;
+    finishUploads(failed, lastResultMessage, lastResultUnfiled);
   }
 
   async function submitReport() {
     clearBanner();
 
     const required = [
+      ['jobRef', 'Job / Project Reference'],
       ['clientName', 'Client Name'],
       ['siteAddress', 'Site Address'],
       ['jobDate', 'Date of Installation'],
@@ -2863,6 +3022,9 @@
       const el = document.getElementById(id);
       if (!el.value || el.value.trim() === '') missing.push(label);
     });
+
+    const refValue = document.getElementById('jobRef').value.trim();
+    if (refValue && !/\d{3,}/.test(refValue)) missing.push('Job / Project Reference — enter the job number (e.g. 28372)');
 
     if (!getSignoffName()) missing.push('Reporting Installer Name');
 
@@ -3001,16 +3163,14 @@
       formData.append('custAckGuided', !clientAbsent && document.getElementById('custAckGuided').checked ? 'Yes' : 'No');
       formData.append('customerSigned', !clientAbsent && !isSignaturePadEmpty() ? 'Yes' : 'No');
 
-      let mediaPayload;
-      try {
-        mediaPayload = await collectMediaAsBase64();
-        cgPhotos.forEach((photo, i) => {
-          mediaPayload.push({ type: 'photo', name: 'Control gear location ' + (i + 1) + '.jpg', mimeType: 'image/jpeg', dataUrl: photo.dataUrl });
-        });
-      } catch (mediaErr) {
-        throw new Error('Failed while processing attached photos/video/audio: ' + describeError(mediaErr) + '. Try removing an attachment (especially a large video) and submitting again.');
+      const uploadList = buildUploadQueue();
+      const oversize = uploadList.filter(it => it.file && it.type !== 'photo' && it.file.size > MAX_FILE_BYTES);
+      if (oversize.length) {
+        throw new Error('These attachments are over 30 MB — remove them and try again:\n' + oversize.map(it => '• ' + it.name).join('\n'));
       }
-      formData.append('mediaFilesJson', JSON.stringify(mediaPayload));
+      if (!currentSubmissionId) currentSubmissionId = newId();
+      formData.append('submissionId', currentSubmissionId);
+      formData.append('mediaCount', String(uploadList.length));
 
       let renderedPdfDataUrl;
       try {
@@ -3020,18 +3180,14 @@
       }
       formData.append('renderedPdfDataUrl', renderedPdfDataUrl);
 
-      let response;
-      try {
-        response = await fetch(SUBMIT_ENDPOINT, { method: 'POST', body: formData });
-      } catch (networkErr) {
-        throw new Error('Could not reach the submission server: ' + describeError(networkErr) + '. Check your internet connection and try again, or use "Print / Save as PDF" and send this report to the office manually.');
-      }
-
       let result;
       try {
-        result = await response.json();
-      } catch (parseErr) {
-        throw new Error('The submission server sent back an unexpected response (HTTP ' + response.status + '). This usually means the Apps Script deployment needs attention — try again shortly, or use "Print / Save as PDF" and send this report to the office manually.');
+        result = await postWithRetry(formData, SUBMIT_TIMEOUT_MS, attempt => {
+          showBanner('success', (attempt > 1 ? 'Connection problem — trying again (' + attempt + ' of ' + SEND_ATTEMPTS + ')…' : 'Saving the report…') +
+            '\n\nKeep this page open.');
+        });
+      } catch (networkErr) {
+        throw new Error('The report could not be sent after ' + SEND_ATTEMPTS + ' tries (' + describeError(networkErr) + '). Your answers are still saved on this device — check your signal and tap Submit again, or use "Print / Save as PDF" and send this report to the office.');
       }
 
       if (result.success) {
@@ -3040,15 +3196,17 @@
         document.getElementById('draftStatus').textContent = 'Submitted — draft cleared from this device.';
         document.getElementById('draftBanner').classList.remove('show');
         const warningNote = result.warning ? '\n\n' + result.warning : '';
-        if (result.unfiled) {
-          // Saved, but not in the job's folder — say so plainly rather than "success"
-          showBanner('error', result.warning || 'Saved to Unfiled - please tell the office.');
-          submitBtn.textContent = 'Saved to Unfiled';
-        } else {
-          const folderNote = result.folderUrl ? '\n\nSaved to: ' + result.folderName : '';
-          showBanner('success', 'Report submitted successfully.' + folderNote + warningNote);
-          submitBtn.textContent = 'Submitted ✓';
-        }
+        lastResultUnfiled = !!result.unfiled;
+        lastResultMessage = result.unfiled
+          ? (result.warning || 'Saved to Unfiled - please tell the office.')
+          : 'Report submitted successfully.' + (result.folderUrl ? '\n\nSaved to: ' + result.folderName : '') + warningNote;
+        uploadTicket = result.uploadTicket || '';
+        uploadSubmissionId = currentSubmissionId;
+        currentSubmissionId = '';       // a later re-submission is a new submission
+        const failed = uploadList.length && uploadTicket
+          ? await uploadQueue(uploadList)
+          : uploadList.map(it => Object.assign(it, { error: 'the server did not accept uploads (redeploy the Job Report script)' }));
+        finishUploads(failed, lastResultMessage, lastResultUnfiled);
       } else {
         showBanner('error', 'Submission failed: ' + (result.error || 'Unknown error') + '\n\nPlease try again, or use "Print / Save as PDF" and send this report to the office manually.');
         submitBtn.disabled = false;

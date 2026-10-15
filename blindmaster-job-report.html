@@ -1035,7 +1035,8 @@
     </div>
 
     <div id="individual-times-panel" style="display:none; margin-top:20px; padding-top:20px; border-top:1px dashed var(--grey-line);">
-      <label style="margin-bottom:12px; display:block;">Individual Time on Site (3+ installers on this job)</label>
+      <label style="margin-bottom:6px; display:block;">Individual Time on Site</label>
+      <div class="hint" style="margin:0 0 12px;">Untick anyone who arrived later or left earlier than the times above, and enter their own times.</div>
       <div id="individualTimesList"></div>
     </div>
   </div>
@@ -1512,12 +1513,12 @@
     const panel = document.getElementById('individual-times-panel');
     const listContainer = document.getElementById('individualTimesList');
 
-    if (crewNames.length < 3) {
+    if (crewNames.length < 2) {   // one installer: their time is the main time
       panel.style.display = 'none';
       return;
     }
 
-    const extraCrewNames = crewNames.slice(2); // beyond the first two, who are covered by the main Start/Finish fields
+    const extraCrewNames = crewNames; // every installer can have their own (partial) time
 
     panel.style.display = 'block';
     listContainer.innerHTML = '';
@@ -3115,7 +3116,7 @@
     const crewNamesForValidation = Array.from(document.querySelectorAll('#crewList input'))
       .map(i => i.value.trim())
       .filter(Boolean);
-    crewNamesForValidation.slice(2).forEach(name => {
+    (crewNamesForValidation.length >= 2 ? crewNamesForValidation : []).forEach(name => {
       const data = individualTimesData[name];
       if (data && !data.sameAsMain) {
         if (!data.start) missing.push(name + ' — Start Time');
@@ -3185,10 +3186,10 @@
         });
       }
 
-      if (crewNames.length >= 3) {
+      if (crewNames.length >= 2) {
         const mainStart = document.getElementById('startTime').value;
         const mainFinish = document.getElementById('finishTime').value;
-        const individualTimesPayload = crewNames.slice(2).map(name => {
+        const individualTimesPayload = crewNames.map(name => {
           const data = individualTimesData[name] || { sameAsMain: true };
           const sameAsMain = data.sameAsMain !== false;
           return {

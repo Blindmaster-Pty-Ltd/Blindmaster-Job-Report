@@ -2615,20 +2615,41 @@
     const refForLookup = document.getElementById('jobRef').value.trim();
     if (refForLookup) {
       const restored = await fetchAndApplyPreviousSubmission(refForLookup);
-      if (restored) {
-        const banner = document.getElementById('prefillBanner');
-        banner.innerHTML = 'A previous report for this job was found and loaded below. Review, update as needed, then submit.';
+      const banner = document.getElementById('prefillBanner');
+      if (restored === true) {
+        banner.innerHTML = 'Your earlier report for this visit was found and loaded below. Review, update as needed, then submit.';
+        banner.style.display = 'block';
+      } else if (restored && restored.otherVisit) {
+        // Multi-day job: a report exists for another day — don't load it
+        banner.textContent = 'This job already has a report from ' + restored.otherVisit +
+          '. This is a new report for today\'s visit, so the form starts fresh with today\'s details.';
         banner.style.display = 'block';
       }
     }
   }
 
+  // Only reloads a report for THIS visit. On multi-day jobs each day has its
+  // own appointment, so a report from another day is not loaded (Jan, Oct
+  // 2026: Mark's Monday link opened Lewis's Friday report, date and all).
   async function fetchAndApplyPreviousSubmission(ref) {
     try {
-      const response = await fetch(SUBMIT_ENDPOINT + '?ref=' + encodeURIComponent(ref) + '&_=' + Date.now(), { cache: 'no-store' });
+      const params = new URLSearchParams(window.location.search);
+      const linkDate = params.get('date') || '';
+      const linkEvent = document.getElementById('calEventId').value || params.get('calEventId') || '';
+      const response = await fetch(SUBMIT_ENDPOINT + '?ref=' + encodeURIComponent(ref) +
+        (linkEvent ? '&calEventId=' + encodeURIComponent(linkEvent) : '') + '&_=' + Date.now(), { cache: 'no-store' });
       const result = await response.json();
       if (!result.found || !result.data) return false;
       const data = result.data;
+
+      const sameVisit = result.sameVisit ||
+        (linkEvent && data.calEventId === linkEvent) ||
+        (linkDate && data.date === linkDate) ||
+        (!linkEvent && !linkDate);           // opened without a calendar link: as before
+      if (!sameVisit) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data.date || '');
+        return { otherVisit: m ? m[3] + '/' + m[2] + '/' + m[1] : 'an earlier visit' };
+      }
 
       if (data.client) document.getElementById('clientName').value = data.client;
       if (data.ref) document.getElementById('jobRef').value = data.ref;

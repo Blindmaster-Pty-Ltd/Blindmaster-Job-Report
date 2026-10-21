@@ -3043,11 +3043,28 @@
   let uploadSubmissionId = '';    // the submission the attachments belong to
   let failedUploads = [];
 
+  // While attachments are still uploading, warn before the page is closed or
+  // the installer navigates away — closing it part-way loses the rest.
+  function warnBeforeLeaving(e) {
+    e.preventDefault();
+    e.returnValue = 'Photos are still uploading. If you leave now, they won\'t be saved.';
+    return e.returnValue;
+  }
+
   async function uploadQueue(queue) {
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    try {
+      return await uploadQueueItems(queue);
+    } finally {
+      window.removeEventListener('beforeunload', warnBeforeLeaving);
+    }
+  }
+
+  async function uploadQueueItems(queue) {
     const failed = [];
     for (let i = 0; i < queue.length; i++) {
       const item = queue[i];
-      showBanner('success', 'Report saved. Uploading attachments: ' + (i + 1) + ' of ' + queue.length + ' (' + item.name + ')…\n\nKeep this page open until it finishes.');
+      showBanner('success', 'Report saved. Uploading attachments: ' + (i + 1) + ' of ' + queue.length + ' (' + item.name + ')…\n\nDON\'T CLOSE THIS PAGE or lock your phone until it says finished — attachments still uploading would be lost.');
       try {
         const read = await readUploadItem(item);
         const approxBytes = Math.round((read.dataUrl.length - read.dataUrl.indexOf(',') - 1) * 3 / 4);

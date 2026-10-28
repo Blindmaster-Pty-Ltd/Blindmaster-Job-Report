@@ -2385,9 +2385,51 @@
         tooBig.map(f => '• ' + f.name + ' (' + formatBytes(f.size) + ')').join('\n') +
         '\n\nRecord a shorter clip, or send it to the office another way.');
     }
-    mediaStore[type] = mediaStore[type].concat(files);
+    // Android only lets a page read gallery files for a short while after
+    // they're picked, so each file is read into the page straight away
+    // (photos shrunk) rather than at upload time (Owen, Oct 2026: 4 photos
+    // failed with "isTrusted" because they were read minutes later).
+    const entries = files.map(file => prepareAttachment(type, file));
+    mediaStore[type] = mediaStore[type].concat(entries);
     renderFileList(type);
     updatePhotoCount();
+  }
+
+  function readAsArrayBuffer(file) {
+    if (typeof file.arrayBuffer === 'function') {
+      return file.arrayBuffer().catch(() => readAsArrayBufferWithReader(file));
+    }
+    return readAsArrayBufferWithReader(file);
+  }
+
+  function readAsArrayBufferWithReader(file) {
+    return new Promise((resolve, reject) => {
+      try {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('not readable'));
+        reader.readAsArrayBuffer(file);
+      } catch (err) { reject(err); }
+    });
+  }
+
+  function prepareAttachment(type, file) {
+    const entry = { name: file.name, size: file.size, type: file.type, file: file, copy: null, error: '', ready: null };
+    entry.ready = (async () => {
+      try {
+        if (type === 'photo' && /^image\//i.test(file.type || 'image/')) {
+          const shrunk = await shrinkPhoto(file);
+          if (shrunk) { entry.copy = { dataUrl: shrunk }; return; }
+        }
+        const buf = await readAsArrayBuffer(file);            // an in-page copy, independent of the gallery
+        entry.copy = { blob: new Blob([buf], { type: file.type || 'application/octet-stream' }) };
+      } catch (err) {
+        entry.error = 'couldn\'t be read from the phone — remove it and add it again';
+      } finally {
+        renderFileList(type);
+      }
+    })();
+    return entry;
   }
 
   function renderFileList(type) {
@@ -2403,8 +2445,9 @@
       const chip = document.createElement('div');
       chip.className = 'file-chip';
       const icon = '';
+      const state = file.error ? ' — <strong style="color:#B3261E;">' + file.error + '</strong>' : (file.copy || !file.ready ? '' : ' — preparing…');
       chip.innerHTML = `
-        <span class="fname">${icon} ${file.name}</span>
+        <span class="fname">${icon} ${file.name}${state}</span>
         <button type="button" class="remove-file" onclick="removeFile('${type}', ${idx})">&times;</button>
       `;
       container.appendChild(chip);
@@ -2792,7 +2835,7 @@
       const clone = document.createElement('div');
       clone.className = 'pdf-textarea-clone';
       clone.textContent = textarea.value || '';
-      clone.style.width = textarea.offsetWidth + 'px';
+      clone.style.width = '100%';   // fill the column at PDF width (fixed px from a phone came out narrow)
       clone.style.minHeight = textarea.offsetHeight + 'px';
       textarea.insertAdjacentElement('afterend', clone);
       textareaClones.push(clone);
@@ -2819,7 +2862,7 @@
       const clone = document.createElement('div');
       clone.className = 'pdf-field-clone';
       clone.textContent = text;
-      clone.style.width = el.offsetWidth + 'px';
+      clone.style.width = '100%';
       clone.style.height = el.offsetHeight + 'px';
       clone.style.lineHeight = Math.max(0, el.offsetHeight - parseFloat(cs.borderTopWidth) - parseFloat(cs.borderBottomWidth)) + 'px';
       clone.style.border = cs.borderTopWidth + ' solid ' + cs.borderTopColor;
@@ -2915,6 +2958,10 @@
     if (!err) return 'Unknown error';
     if (typeof err === 'string') return err;
     if (err.message) return err.message;
+    // A browser "error" event (e.g. a file the phone won't let the page read)
+    if (err.type === 'error' || err.isTrusted !== undefined) {
+      return 'the phone couldn\'t read this file — remove it, add it again, then tap Retry';
+    }
     try {
       return JSON.stringify(err);
     } catch (e) {
@@ -2974,8 +3021,25 @@
     return queue;
   }
 
+  function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('the file could not be prepared'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
   async function readUploadItem(item) {
     if (item.dataUrl) return { dataUrl: item.dataUrl, mimeType: item.mimeType || 'image/jpeg' };
+    const entry = item.file;
+    if (entry && entry.ready) {
+      await entry.ready;
+      if (entry.copy && entry.copy.dataUrl) return { dataUrl: entry.copy.dataUrl, mimeType: 'image/jpeg' };
+      if (entry.copy && entry.copy.blob) return { dataUrl: await blobToDataUrl(entry.copy.blob), mimeType: entry.type || 'application/octet-stream' };
+      if (entry.error) throw new Error('it ' + entry.error);
+      item = Object.assign({}, item, { file: entry.file });     // last resort: try the original file
+    }
     if (item.type === 'photo' && /^image\//i.test(item.file.type || 'image/')) {
       const shrunk = await shrinkPhoto(item.file);            // ~1600px JPEG, same as the control gear photos
       if (shrunk) return { dataUrl: shrunk, mimeType: /^data:image\/jpeg/i.test(shrunk) ? 'image/jpeg' : (item.file.type || 'image/jpeg') };
@@ -3042,6 +3106,7 @@
   let currentSubmissionId = '';   // same ID on every retry of one submission
   let uploadSubmissionId = '';    // the submission the attachments belong to
   let failedUploads = [];
+  const uploadedNames = new Set();   // attachments already in Drive for this submission
 
   // While attachments are still uploading, warn before the page is closed or
   // the installer navigates away — closing it part-way loses the rest.
@@ -3079,6 +3144,7 @@
         fd.append('dataUrl', read.dataUrl);
         const result = await postWithRetry(fd, UPLOAD_TIMEOUT_MS);
         if (!result || !result.success) throw new Error((result && result.error) || 'not saved');
+        uploadedNames.add(item.name);
       } catch (err) {
         item.error = describeError(err);
         failed.push(item);
@@ -3095,7 +3161,7 @@
       retryRow.style.display = 'flex';
       showBanner('error', baseMessage + '\n\n' + failed.length + ' attachment' + (failed.length === 1 ? '' : 's') + ' did NOT upload:\n' +
         failed.map(f => '• ' + f.name + ' — ' + f.error).join('\n') +
-        '\n\nThe report itself is saved. Tap "Retry failed uploads" (keep this page open), or send these files to the office.');
+        '\n\nThe report itself is saved. Tap "Retry failed uploads" (keep this page open). If a photo says it couldn\'t be read, remove it in Site Collateral, add it again, then tap Retry. Or send the files to the office.');
       submitBtn.textContent = 'Report saved — uploads incomplete';
     } else {
       retryRow.style.display = 'none';
@@ -3107,10 +3173,12 @@
   let lastResultMessage = '', lastResultUnfiled = false;
 
   async function retryFailedUploads() {
-    if (!failedUploads.length) return;
+    // Everything not uploaded yet — including photos removed and added again
+    const queue = buildUploadQueue().filter(it => !uploadedNames.has(it.name));
+    if (!queue.length) { finishUploads([], lastResultMessage, lastResultUnfiled); return; }
     const btn = document.getElementById('retryUploadsBtn');
     btn.disabled = true;
-    const failed = await uploadQueue(failedUploads.map(f => Object.assign({}, f, { error: '' })));
+    const failed = await uploadQueue(queue);
     btn.disabled = false;
     finishUploads(failed, lastResultMessage, lastResultUnfiled);
   }
